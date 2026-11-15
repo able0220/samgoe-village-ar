@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>시장 삼매치</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&family=IBM+Plex+Mono:wght@500;600&family=Nanum+Myeongjo:wght@800&display=swap">
+<style>
+:root {
+  --deep: #1c1612;
+  --line: #43362a;
+  --paper: #f6ecdc;
+  --muted: #b3a690;
+  --acc: #f2a54a;
+  --leaf: #8cc66a;
+  --ink: #1d1409;
+  --stamp: #d23a2b;
+  --bad: #e0583f;
+  --f-display: 'Do Hyeon', 'Gowun Dodum', sans-serif;
+  --f-body: 'Gowun Dodum', 'Noto Sans KR', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --f-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--deep);
+  color: var(--paper);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 32px;
+}
+.app { max-width: 560px; margin-inline: auto; display: flex; flex-direction: column; gap: 16px; }
+.eyebrow { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--acc); }
+h1 { margin: 8px 0 6px; font: 400 clamp(38px, 10vw, 54px)/1.05 var(--f-display); text-wrap: balance; }
+.rule { margin: 0; color: var(--muted); max-width: 44ch; }
+
+.hud { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; padding-block: 12px; border-block: 1px solid var(--line); }
+.k { font: 500 11px/1.2 var(--f-mono); letter-spacing: .1em; color: var(--muted); }
+.stat { display: flex; flex-direction: column; min-width: 0; }
+.stat .v { font: 600 22px/1.2 var(--f-mono); font-variant-numeric: tabular-nums; }
+.meter { flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.meter .k b { font-weight: 600; font-size: 13px; color: var(--paper); }
+.bar { height: 14px; border-radius: 7px; background: #2a2018; border: 1px solid var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: 7px; background: var(--acc); transition: width .25s, background .2s; }
+.bar.done i { background: var(--leaf); }
+
+.stage { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #3a2b1e; padding: 22px 10px 10px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.stage::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 14px; background: repeating-linear-gradient(90deg, #d6513c 0 22px, #f6ecdc 22px 44px); box-shadow: 0 2px 0 rgba(0, 0, 0, .25); }
+.board { position: relative; width: 100%; aspect-ratio: 1 / 1; --fs: 32px; }
+.cells, .tiles { position: absolute; inset: 0; }
+.cells { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); }
+.cells i { margin: 3%; border-radius: 12%; background: rgba(0, 0, 0, .22); }
+.tile { position: absolute; left: 0; top: 0; width: calc(100% / 6); height: calc(100% / 6); padding: 3%; transition: transform .22s ease; cursor: pointer; touch-action: none; }
+.face { width: 100%; height: 100%; border-radius: 14%; display: flex; align-items: center; justify-content: center; font: 400 var(--fs)/1 var(--f-emoji); box-shadow: 0 2px 0 rgba(0, 0, 0, .3), inset 0 0 0 1px rgba(255, 255, 255, .35); transition: transform .2s ease, opacity .2s ease; }
+.tile[data-k="0"] .face { background: #cfe6f4; }
+.tile[data-k="1"] .face { background: #f6cfc8; }
+.tile[data-k="2"] .face { background: #f4d7e2; }
+.tile[data-k="3"] .face { background: #d6ecc0; }
+.tile[data-k="4"] .face { background: #f3e4a8; }
+.tile[data-k="5"] .face { background: #e3cfb0; }
+.tile.sel .face { box-shadow: 0 0 0 3px var(--acc), 0 2px 0 rgba(0, 0, 0, .3); transform: scale(1.06); }
+.tile.pop .face { transform: scale(0); opacity: 0; transition: transform .22s ease-in, opacity .22s ease-in; }
+.tile.nope .face { animation: nope .28s; }
+.tile.mix .face { animation: mix .4s; }
+@keyframes nope { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes mix { 0% { transform: scale(.3) rotate(-90deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+.toast { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); pointer-events: none; font: 400 clamp(26px, 8vw, 38px)/1 var(--f-display); color: #fff3d6; -webkit-text-stroke: 6px rgba(29, 20, 9, .9); paint-order: stroke fill; opacity: 0; }
+.toast.show { animation: toast .9s ease-out; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.7); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -80%) scale(1); } }
+
+.overlay { position: absolute; inset: 0; display: flex; align-items: safe center; justify-content: center; padding: 16px; padding-top: 28px; overflow-y: auto; background: rgba(22, 16, 11, .95); }
+.overlay[hidden] { display: none; }
+.card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: min(340px, 100%); }
+.card[hidden] { display: none; }
+.tag { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--acc); }
+.card h2 { margin: 0; font: 400 clamp(34px, 10vw, 50px)/1.05 var(--f-display); text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); }
+.card .btn { margin-top: 12px; }
+#ovMsg { white-space: pre-line; }
+#quizCard, #stampCard { gap: 6px; }
+.lead-label { margin: 0; font: 600 11px/1 var(--f-mono); letter-spacing: .14em; color: var(--acc); }
+.card p.lead { margin: 0 0 4px; color: var(--paper); font-size: 14px; line-height: 1.5; }
+.card p.quiz-q { margin: 0; color: var(--paper); font: 400 19px/1.35 var(--f-display); }
+#quizCard h2 { font-size: clamp(30px, 8vw, 40px); }
+.ox { display: flex; gap: 12px; width: 100%; margin-top: 8px; }
+.card .ox .btn { flex: 1; min-height: 68px; margin-top: 0; padding: 0; font-size: 40px; }
+.card .ox .btn.x { background: var(--bad); color: var(--paper); }
+.sheet { width: 100%; display: flex; justify-content: center; padding: 10px; border-radius: 4px; background: #f4ecd6; box-shadow: inset 0 0 0 1px rgba(29, 20, 9, .12), 0 8px 24px rgba(0, 0, 0, .35); }
+.stamp { display: block; width: min(170px, 60%); height: auto; color: var(--stamp); transform: rotate(-8deg); animation: stampIn .7s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes stampIn {
+  0% { transform: scale(2.6) rotate(-22deg); opacity: 0; }
+  55% { transform: scale(.93) rotate(-8deg); opacity: 1; }
+  75% { transform: scale(1.04) rotate(-8deg); }
+  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+
+.btn { appearance: none; border: 0; width: 100%; min-height: 60px; border-radius: 4px; background: var(--acc); color: var(--ink); font: 400 24px/1 var(--f-display); letter-spacing: .03em; cursor: pointer; transition: transform .08s, filter .15s; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.btn:hover { filter: brightness(1.07); }
+.btn:active { transform: translateY(2px) scale(.99); filter: brightness(.92); }
+.btn:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.legend .ic { font: 400 15px/1 var(--f-emoji); }
+@media (prefers-reduced-motion: reduce) { .tile, .face, .btn, .bar i { transition: none; } .stamp, .toast.show, .tile.mix .face, .tile.nope .face { animation: none; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <p class="eyebrow">MARKET MATCH · 난이도 하</p>
+    <h1>시장 삼매치</h1>
+    <p class="rule">장터 좌판의 물건을 옆 칸과 바꿔서 같은 물건 3개를 나란히 맞추세요. 12번 안에 40개를 팔면 성공이고, 성공하면 보너스 퀴즈가 나와요.</p>
+  </header>
+
+  <section class="hud" aria-label="진행 상황">
+    <div class="stat"><span class="k">남은 횟수</span><span class="v" id="moves">12</span></div>
+    <div class="meter">
+      <span class="k">판 물건 <b id="sold">0</b> / 40개</span>
+      <div class="bar" id="bar" role="progressbar" aria-label="판 물건" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0"><i id="fill"></i></div>
+    </div>
+  </section>
+
+  <div class="stage" id="stage">
+    <div class="board" id="board" aria-label="물건이 놓인 좌판">
+      <div class="cells" id="cells"></div>
+      <div class="tiles" id="tiles"></div>
+    </div>
+    <div class="toast" id="toast" aria-live="polite"></div>
+    <div class="overlay" id="ov">
+      <div class="card" id="endCard" role="dialog" aria-live="polite">
+        <p class="tag" id="ovTag">READY</p>
+        <h2 id="ovTitle">장이 섰어요</h2>
+        <p id="ovMsg">물건을 눌러 옆 칸과 바꾸거나, 옆으로 밀어서 바꿔요. 같은 물건이 가로나 세로로 3개 이상 모이면 팔려요.</p>
+        <button class="btn" id="start" type="button">장사 시작</button>
+      </div>
+      <div class="card" id="quizCard" role="dialog" aria-live="polite" hidden>
+        <p class="lead-label">지명 유래</p>
+        <p class="lead">해변가와 굴곡이 많아 수산업과 농업이 발달하여 시장이 형성되어 많은 사람들이 모여 장터를 이루었다.</p>
+        <p class="tag">BONUS QUIZ</p>
+        <h2>O 또는 X?</h2>
+        <p class="quiz-q" id="quizQ"></p>
+        <div class="ox">
+          <button class="btn" id="ansO" type="button" aria-label="O, 맞아요">O</button>
+          <button class="btn x" id="ansX" type="button" aria-label="X, 틀려요">X</button>
+        </div>
+      </div>
+      <div class="card" id="stampCard" role="dialog" aria-live="polite" hidden>
+        <div class="sheet">
+          <svg class="stamp" viewBox="0 0 220 220" role="img" aria-label="확인 도장">
+            <defs>
+              <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="warp"/>
+                <feDisplacementMap in="SourceGraphic" in2="warp" scale="3.5" result="bent"/>
+                <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="9" result="grain"/>
+                <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -5 3.9" result="ink"/>
+                <feComposite in="bent" in2="ink" operator="in"/>
+              </filter>
+            </defs>
+            <g filter="url(#rough)" fill="currentColor" stroke="currentColor" style="font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; font-weight: 800;">
+              <circle cx="110" cy="110" r="100" fill="none" stroke-width="8"/>
+              <circle cx="110" cy="110" r="88" fill="none" stroke-width="2.5"/>
+              <text x="110" y="70" text-anchor="middle" font-size="15" letter-spacing="4" stroke="none">퀴즈 통과</text>
+              <text x="110" y="136" text-anchor="middle" font-size="76" stroke="none">확인</text>
+              <text x="110" y="170" text-anchor="middle" font-size="14" letter-spacing="3" stroke="none">장터 지명 유래</text>
+            </g>
+          </svg>
+        </div>
+        <button class="btn" id="again2" type="button">다시 하기</button>
+      </div>
+    </div>
+  </div>
+
+  <ul class="legend" aria-label="게임 방법">
+    <li><span class="ic">🐟🦀🐚</span>같은 물건 3개 이상을 가로·세로로 맞추기</li>
+    <li><span class="ic">👆</span>두 칸을 차례로 누르거나 옆으로 밀기</li>
+    <li><span class="ic">✨</span>한꺼번에 이어서 팔리면 연쇄!</li>
+  </ul>
+</main>
+
+<script>
+(() => {
+  const ROWS = 6, COLS = 6;
+  const MOVES = 12;      // 주어지는 횟수
+  const GOAL = 40;       // 성공에 필요한 판매 개수
+  const KINDS = ['🐟', '🦀', '🐚', '🥬', '🌾', '🥔'];   // 생선, 게, 조개, 배추, 곡식, 감자
+  const SWAP_MS = 230, POP_MS = 240, FALL_MS = 300;
+
+  // 성공했을 때 나오는 O/X 퀴즈. answer가 true면 O, false면 X가 정답이다.
+  const QUIZ = {
+    q: "지명에 '터'가 붙으면 집이나 마을이 있던 자리를 뜻한다.",
+    answer: true,
+    note: "'터'는 집이나 마을이 있던 자리를 뜻해요."
+  };
+
+  const boardEl = document.getElementById('board');
+  const cellsEl = document.getElementById('cells');
+  const layer = document.getElementById('tiles');
+  const toastEl = document.getElementById('toast');
+  const movesEl = document.getElementById('moves');
+  const soldEl = document.getElementById('sold');
+  const barEl = document.getElementById('bar');
+  const fillEl = document.getElementById('fill');
+  const ov = document.getElementById('ov');
+  const ovTag = document.getElementById('ovTag');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovMsg = document.getElementById('ovMsg');
+  const startBtn = document.getElementById('start');
+  const endCard = document.getElementById('endCard');
+  const quizCard = document.getElementById('quizCard');
+  const stampCard = document.getElementById('stampCard');
+  const again2 = document.getElementById('again2');
+  const ansO = document.getElementById('ansO');
+  const ansX = document.getElementById('ansX');
+
+  document.getElementById('quizQ').textContent = QUIZ.q;
+  for (let i = 0; i < ROWS * COLS; i++) cellsEl.appendChild(document.createElement('i'));
+
+  let grid = [], state = 'ready', busy = true, moves = MOVES, sold = 0, sel = null, drag = null, readyAt = 0, toastT;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const rnd = n => Math.floor(Math.random() * n);
+
+  /* ---------- 칸과 물건 ---------- */
+  function setPos(t) { t.el.style.transform = 'translate(' + (t.c * 100) + '%,' + (t.r * 100) + '%)'; }
+  function paint(t) { t.el.dataset.k = t.type; t.el.firstChild.textContent = KINDS[t.type]; }
+  function makeTile(type, r, c) {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.innerHTML = '<div class="face"></div>';
+    const t = { type: type, r: r, c: c, el: el };
+    paint(t); setPos(t);
+    layer.appendChild(el);
+    return t;
+  }
+  function fit() { boardEl.style.setProperty('--fs', (boardEl.clientWidth / COLS * 0.56) + 'px'); }
+
+  /* ---------- 맞춤 검사 (물건 종류만 담은 표로도 검사한다) ---------- */
+  function runsOf(ty) {
+    const out = [];
+    for (let r = 0; r < ROWS; r++) {
+      let c = 0;
+      while (c < COLS) { let e = c; while (e + 1 < COLS && ty[r][e + 1] === ty[r][c]) e++; if (e - c >= 2) for (let k = c; k <= e; k++) out.push([r, k]); c = e + 1; }
+    }
+    for (let c = 0; c < COLS; c++) {
+      let r = 0;
+      while (r < ROWS) { let e = r; while (e + 1 < ROWS && ty[e + 1][c] === ty[r][c]) e++; if (e - r >= 2) for (let k = r; k <= e; k++) out.push([k, c]); r = e + 1; }
+    }
+    return out;
+  }
+  const typesOf = () => grid.map(row => row.map(t => t.type));
+  function findMatches() { const s = new Set(); runsOf(typesOf()).forEach(p => s.add(grid[p[0]][p[1]])); return s; }
+  function hasMove(ty) {
+    const sw = (a, b, c, d) => { const x = ty[a][b]; ty[a][b] = ty[c][d]; ty[c][d] = x; };
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (c + 1 < COLS) { sw(r, c, r, c + 1); const m = runsOf(ty).length; sw(r, c, r, c + 1); if (m) return true; }
+      if (r + 1 < ROWS) { sw(r, c, r + 1, c); const m = runsOf(ty).length; sw(r, c, r + 1, c); if (m) return true; }
+    }
+    return false;
+  }
+  function randomTypes() {
+    let ty;
+    do {
+      ty = [];
+      for (let r = 0; r < ROWS; r++) {
+        ty.push([]);
+        for (let c = 0; c < COLS; c++) {
+          let v, guard = 0;
+          do { v = rnd(KINDS.length); guard++; }
+          while (guard < 30 && ((c >= 2 && ty[r][c - 1] === v && ty[r][c - 2] === v) || (r >= 2 && ty[r - 1][c] === v && ty[r - 2][c] === v)));
+          ty[r].push(v);
+        }
+      }
+    } while (runsOf(ty).length || !hasMove(ty));
+    return ty;
+  }
+
+  function newBoard() {
+    layer.textContent = '';
+    const ty = randomTypes();
+    grid = ty.map((row, r) => row.map((v, c) => makeTile(v, r, c)));
+    sel = null;
+  }
+
+  /* ---------- 진행 ---------- */
+  function updateHud() {
+    movesEl.textContent = moves;
+    soldEl.textContent = sold;
+    fillEl.style.width = (Math.min(1, sold / GOAL) * 100).toFixed(1) + '%';
+    barEl.classList.toggle('done', sold >= GOAL);
+    barEl.setAttribute('aria-valuenow', String(Math.min(sold, GOAL)));
+  }
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.remove('show'); void toastEl.offsetWidth; toastEl.classList.add('show');
+  }
+  function startGame() {
+    quizCard.hidden = true; stampCard.hidden = true; endCard.hidden = false;
+    moves = MOVES; sold = 0;
+    newBoard();
+    updateHud();
+    state = 'play'; busy = false;
+    ov.hidden = true;
+  }
+
+  async function swapTiles(a, b) {
+    grid[a.r][a.c] = b; grid[b.r][b.c] = a;
+    const r = a.r, c = a.c; a.r = b.r; a.c = b.c; b.r = r; b.c = c;
+    setPos(a); setPos(b);
+    await sleep(SWAP_MS);
+  }
+
+  async function resolve() {
+    let chain = 0;
+    for (;;) {
+      const m = findMatches();
+      if (!m.size) break;
+      chain++;
+      if (chain >= 2) toast('연쇄 ×' + chain + '!');
+      m.forEach(t => t.el.classList.add('pop'));
+      sold += m.size; updateHud();
+      await sleep(POP_MS);
+      m.forEach(t => { grid[t.r][t.c] = null; t.el.remove(); });
+      for (let c = 0; c < COLS; c++) {
+        let w = ROWS - 1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          const t = grid[r][c];
+          if (t) { if (r !== w) { grid[w][c] = t; grid[r][c] = null; t.r = w; setPos(t); } w--; }
+        }
+        for (let r = w; r >= 0; r--) {        // 위에서 새 물건이 내려온다
+          const t = makeTile(rnd(KINDS.length), r - (w + 1), c);
+          t.el.style.transition = 'none';
+          setPos(t);
+          void t.el.offsetWidth;
+          t.el.style.transition = '';
+          t.r = r; setPos(t);
+          grid[r][c] = t;
+        }
+      }
+      await sleep(FALL_MS);
+    }
+  }
+
+  async function reshuffle() {
+    toast('물건을 다시 섞었어요');
+    const ty = randomTypes();
+    grid.forEach((row, r) => row.forEach((t, c) => { t.type = ty[r][c]; paint(t); t.el.classList.remove('mix'); void t.el.offsetWidth; t.el.classList.add('mix'); }));
+    await sleep(420);
+  }
+
+  async function attempt(a, b) {
+    if (busy || state !== 'play') return;
+    busy = true; clearSel();
+    await swapTiles(a, b);
+    if (!findMatches().size) {                 // 맞지 않으면 원래대로
+      await swapTiles(a, b);
+      a.el.classList.add('nope'); b.el.classList.add('nope');
+      setTimeout(() => { a.el.classList.remove('nope'); b.el.classList.remove('nope'); }, 300);
+      busy = false; return;
+    }
+    moves--; updateHud();
+    await resolve();
+    if (sold >= GOAL) return finish(true);
+    if (moves <= 0) return finish(false);
+    if (!hasMove(typesOf())) await reshuffle();
+    busy = false;
+  }
+
+  function finish(win) {
+    state = 'over'; busy = true;
+    setTimeout(() => {
+      if (win) { showQuiz(); return; }
+      ovTag.textContent = 'TRY AGAIN';
+      ovTitle.textContent = '장이 파했어요';
+      ovMsg.textContent = MOVES + '번 동안 ' + sold + '개를 팔았어요. ' + GOAL + '개가 필요해요.';
+      startBtn.textContent = '다시 하기';
+      endCard.hidden = false; quizCard.hidden = true; stampCard.hidden = true;
+      ov.hidden = false;
+      readyAt = performance.now() + 900;
+      startBtn.focus({ preventScroll: true });
+    }, 700);
+  }
+
+  /* ---------- 성공 후 O/X 퀴즈 ---------- */
+  function showQuiz() {
+    endCard.hidden = true; stampCard.hidden = true; quizCard.hidden = false;
+    ov.hidden = false;
+    ansO.focus({ preventScroll: true });
+  }
+  function answer(choice) {
+    if (quizCard.hidden) return;
+    quizCard.hidden = true;
+    if (choice === QUIZ.answer) {       // 정답이면 결과창 대신 확인 도장이 찍힌다
+      stampCard.hidden = false;
+      again2.focus({ preventScroll: true });
+      return;
+    }
+    endCard.hidden = false;
+    ovTag.textContent = 'CLEAR · 오답';
+    ovTitle.textContent = '정답은 ' + (QUIZ.answer ? 'O' : 'X') + '예요';
+    ovMsg.textContent = QUIZ.note + '\n' + (MOVES - moves) + '번 만에 ' + sold + '개를 팔았어요.';
+    startBtn.textContent = '다시 하기';
+    readyAt = performance.now() + 900;
+    startBtn.focus({ preventScroll: true });
+  }
+
+  /* ---------- 입력: 두 칸을 차례로 누르거나, 옆으로 민다 ---------- */
+  function tileAt(e) {
+    const rc = layer.getBoundingClientRect();
+    const c = Math.floor((e.clientX - rc.left) / rc.width * COLS), r = Math.floor((e.clientY - rc.top) / rc.height * ROWS);
+    return (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r] && grid[r][c]) || null;
+  }
+  const adjacent = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+  function clearSel() { if (sel) sel.el.classList.remove('sel'); sel = null; }
+  function tapTile(t) {
+    if (busy || state !== 'play') return;
+    if (!sel) { sel = t; t.el.classList.add('sel'); }
+    else if (sel === t) clearSel();
+    else if (adjacent(sel, t)) attempt(sel, t);
+    else { clearSel(); sel = t; t.el.classList.add('sel'); }
+  }
+  layer.addEventListener('pointerdown', e => {
+    if (busy || state !== 'play') return;
+    const t = tileAt(e); if (!t) return;
+    e.preventDefault();
+    drag = { t: t, x: e.clientX, y: e.clientY, done: false };
+  });
+  window.addEventListener('pointermove', e => {
+    if (!drag || drag.done) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y, cell = layer.clientWidth / COLS;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < cell * 0.4) return;
+    drag.done = true;
+    const dr = Math.abs(dx) > Math.abs(dy) ? 0 : (dy > 0 ? 1 : -1), dc = dr === 0 ? (dx > 0 ? 1 : -1) : 0;
+    const r = drag.t.r + dr, c = drag.t.c + dc;
+    const n = (r >= 0 && r < ROWS && c >= 0 && c < COLS) ? grid[r][c] : null;
+    if (n) attempt(drag.t, n);
+  });
+  window.addEventListener('pointerup', () => { if (!drag) return; const d = drag; drag = null; if (!d.done) tapTile(d.t); });
+  window.addEventListener('pointercancel', () => { drag = null; });
+
+  startBtn.addEventListener('click', startGame);
+  again2.addEventListener('click', startGame);
+  ansO.addEventListener('click', () => answer(true));
+  ansX.addEventListener('click', () => answer(false));
+  document.addEventListener('keydown', e => {
+    if (!ov.hidden && !endCard.hidden) {          // 시작·다시 하기 화면: 스페이스바나 Enter로도 시작
+      if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat) { e.preventDefault(); if (performance.now() >= readyAt) startGame(); }
+      return;
+    }
+    if (!quizCard.hidden && !ov.hidden) {
+      if (e.code === 'KeyO') answer(true);
+      else if (e.code === 'KeyX') answer(false);
+    }
+  });
+  window.addEventListener('resize', fit);
+
+  fit();
+  newBoard();                      // 시작 화면 뒤에 보이는 좌판
+  updateHud();
+  startBtn.focus({ preventScroll: true });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>화성시 장안면 어은리(魚隱里) 탐험: 물고기 낚시 & 퀴즈 게임</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts (Gothic A1 / Nanum Pen Script) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;700;900&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Gothic A1', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        .font-pen {
+            font-family: 'Nanum Pen Script', cursive;
+        }
+        
+        /* Custom Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-25px); }
+            100% { transform: translateX(0); }
+        }
+        .animate-wave {
+            animation: wave 6s ease-in-out infinite;
+        }
+
+        /* Stamp Animation Effect */
+        @keyframes stampIn {
+            0% {
+                opacity: 0;
+                transform: scale(3) rotate(-15deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(0.9) rotate(-15deg);
+            }
+            70% {
+                transform: scale(1.1) rotate(-15deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(-12deg);
+            }
+        }
+        .stamp-animation {
+            animation: stampIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Ripple effect on water canvas click */
+        @keyframes ripple {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        .ripple {
+            position: absolute;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: ripple 0.8s linear forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-800 flex flex-col items-center justify-center min-h-screen p-2 md:p-4 overflow-x-hidden">
+
+    <!-- Game Container Wrapper -->
+    <div class="relative w-full max-w-4xl bg-sky-100 rounded-3xl shadow-2xl border-4 border-amber-700/40 overflow-hidden flex flex-col min-h-[650px] aspect-[4/3] md:aspect-[16/10]">
+        
+        <!-- Header Bar -->
+        <header class="bg-gradient-to-r from-amber-800 via-amber-700 to-amber-900 text-amber-50 p-3 px-6 flex justify-between items-center shadow-md z-10 border-b-2 border-amber-600">
+            <div class="flex items-center gap-3">
+                <span class="bg-amber-100 text-amber-900 text-xs font-black px-2.5 py-1 rounded-full shadow-inner border border-amber-300">화성시 장안면</span>
+                <h1 class="text-lg md:text-2xl font-extrabold tracking-tight drop-shadow">어은리(魚隱里) 마을 탐험</h1>
+            </div>
+            <!-- Score & Progress -->
+            <div class="flex items-center gap-4 text-sm md:text-base font-bold">
+                <div class="bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-500/30 flex items-center gap-2">
+                    <i class="fa-solid font-bold text-amber-300 fa-stamp"></i>
+                    <span>미션 진행: <span id="stamp-count" class="text-amber-300 text-lg">0</span> / 1</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN GAME VIEW AREA -->
+        <main class="relative flex-1 w-full h-full overflow-hidden bg-sky-300">
+
+            <!-- ---------------------------------------------------------------- border-b -->
+            <!-- SCENE 1: START & INTRODUCTION SCREEN -->
+            <!-- ---------------------------------------------------------------- -->
+            <section id="screen-intro" class="absolute inset-0 z-20 bg-gradient-to-b from-sky-400 via-teal-300 to-blue-600 flex flex-col items-center justify-between p-6 text-center">
+                
+                <!-- Background decorative elements -->
+                <div class="absolute top-4 left-6 text-white/30 text-6xl animate-float"><i class="fa-solid fa-fish"></i></div>
+                <div class="absolute top-12 right-10 text-white/20 text-8xl animate-float" style="animation-delay: 1.5s;"><i class="fa-solid fa-water"></i></div>
+
+                <!-- Intro Title Box -->
+                <div class="mt-4 bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-xl border-4 border-amber-500 max-w-xl w-full">
+                    <div class="inline-block bg-amber-500 text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full mb-2">지명 유래로 배우는 역사 탐험</div>
+                    <h2 class="text-2xl md:text-4xl font-black text-slate-800 mb-2 leading-tight">
+                        물고기가 숨어든 마을,<br><span class="text-blue-600">어은리(魚隱里)</span> 이야기
+                    </h2>
+                    
+                    <div class="my-4 text-slate-700 text-sm md:text-base leading-relaxed text-left bg-sky-50 p-4 rounded-2xl border border-sky-200">
+                        <p class="mb-2">
+                            <i class="fa-solid fa-location-dot text-red-500 mr-1"></i> <strong>경기도 화성시 장안면 어은리</strong>는 아주 먼 옛날, 바닷물이 마을 깊숙이 들어오던 수로(갯골)였습니다.
+                        </p>
+                        <p class="mb-1">
+                            바닷물을 따라 흘러들어온 수많은 물고기들이 바위와 풀숲 뒤에 <strong>'숨어들던 곳'</strong>이라 하여 
+                            <span class="text-blue-700 font-bold">물고기 어(魚)</span>, <span class="text-teal-700 font-bold">숨을 은(隱)</span> 자를 써서 <strong>어은리(魚隱里)</strong>라는 이름을 갖게 되었습니다.
+                        </p>
+                    </div>
+
+                    <p class="text-xs md:text-sm font-bold text-amber-800 bg-amber-100 p-2.5 rounded-xl border border-amber-300">
+                        🎣 헤엄치는 물고기를 낚아 올리고 어은리 유래 퀴즈를 맞혀 <br class="hidden sm:inline">'참잘했어요!' 도장을 모아보세요!
+                    </p>
+                </div>
+
+                <!-- Start Button -->
+                <button id="btn-start" class="mb-6 group relative inline-flex items-center justify-center px-8 py-4 text-xl md:text-2xl font-black text-white bg-gradient-to-r from-amber-500 to-orange-600 rounded-full shadow-lg hover:from-amber-600 hover:to-orange-700 transform hover:scale-105 active:scale-95 transition-all border-4 border-amber-200 cursor-pointer">
+                    <i class="fa-solid fa-hook mr-3 group-hover:rotate-12 transition-transform"></i> 낚시터로 출발하기!
+                </button>
+            </section>
+
+
+            <!-- ---------------------------------------------------------------- -->
+            <!-- SCENE 2: FISHING GAME CANVAS AREA -->
+            <!-- ---------------------------------------------------------------- -->
+            <section id="screen-game" class="relative w-full h-full hidden">
+                
+                <!-- Sky & Coast Background UI -->
+                <div class="absolute top-0 inset-x-0 h-1/4 bg-gradient-to-b from-sky-300 to-sky-200 flex justify-between items-start p-4">
+                    <!-- Village Info Banner -->
+                    <div class="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-2xl shadow border border-sky-300 text-xs md:text-sm text-slate-700">
+                        <span class="font-bold text-blue-800"><i class="fa-solid fa-water-ladder text-blue-500 mr-1"></i> 옛 어은리 갯골</span>
+                        <p class="text-slate-500 text-xs hidden sm:block">바닷물이 깊숙이 들어와 물고기가 은신하기 좋은 곳입니다.</p>
+                    </div>
+
+                    <!-- Instruction overlay -->
+                    <div class="bg-amber-100/90 text-amber-900 px-4 py-2 rounded-2xl shadow border border-amber-300 font-bold text-xs md:text-sm animate-bounce">
+                        <i class="fa-solid fa-hand-pointer mr-1"></i> 헤엄치는 물고기를 클릭해 낚아보세요!
+                    </div>
+                </div>
+
+                <!-- Fishing Canvas -->
+                <canvas id="fishingCanvas" class="absolute inset-0 w-full h-full cursor-crosshair"></canvas>
+
+                <!-- Floating Helper Hook Animation (Visual cue) -->
+                <div id="hook-indicator" class="pointer-events-none absolute text-amber-700 text-3xl opacity-0 transition-opacity">
+                    <i class="fa-solid fa-hook"></i>
+                </div>
+            </section>
+
+
+            <!-- ---------------------------------------------------------------- -->
+            <!-- SCENE 3: QUIZ MODAL OVERLAY -->
+            <!-- ---------------------------------------------------------------- -->
+            <section id="screen-quiz" class="absolute inset-0 z-30 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+                
+                <div class="bg-white rounded-3xl shadow-2xl border-4 border-blue-500 max-w-lg w-full overflow-hidden transform transition-all scale-95 opacity-0" id="quiz-card">
+                    
+                    <!-- Quiz Header -->
+                    <div class="bg-gradient-to-r from-blue-600 to-teal-500 text-white p-4 md:p-5 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/30" id="quiz-category">지명 유래 퀴즈</span>
+                            <h3 class="font-bold text-lg md:text-xl">물고기를 낚았습니다! 🎣</h3>
+                        </div>
+                        <div class="text-amber-300 font-black text-lg" id="quiz-number-tag">Q1</div>
+                    </div>
+
+                    <!-- Quiz Content Body -->
+                    <div class="p-6">
+                        <!-- Fish caught banner -->
+                        <div class="flex items-center justify-center gap-3 bg-sky-50 p-3 rounded-2xl border border-sky-200 mb-5">
+                            <div id="caught-fish-icon" class="text-4xl text-blue-500 animate-bounce">🐟</div>
+                            <div class="text-left">
+                                <p class="text-xs text-slate-500">방금 낚은 물고기</p>
+                                <p id="caught-fish-name" class="text-base font-bold text-sky-900">어은리 숭어</p>
+                            </div>
+                        </div>
+
+                        <!-- Question Text -->
+                        <h4 id="quiz-question" class="text-lg md:text-xl font-extrabold text-slate-800 mb-6 leading-snug text-center">
+                            어은리(魚隱里)의 '어(魚)' 자는 무엇과 관련된 한자일까요?
+                        </h4>
+
+                        <!-- Options List -->
+                        <div id="quiz-options" class="grid grid-cols-1 gap-3">
+                            <!-- Dynamically Generated Buttons -->
+                        </div>
+
+                        <!-- Feedback Message Area -->
+                        <div id="quiz-feedback" class="mt-4 p-3 rounded-xl text-center text-sm font-bold hidden"></div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ---------------------------------------------------------------- -->
+            <!-- SCENE 4: MISSION COMPLETE STAMP OVERLAY -->
+            <!-- ---------------------------------------------------------------- -->
+            <section id="screen-result" class="absolute inset-0 z-40 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-4 hidden">
+                
+                <!-- Result Card -->
+                <div class="relative bg-amber-50 rounded-3xl p-6 md:p-8 max-w-md w-full text-center border-8 border-amber-600 shadow-2xl overflow-hidden flex flex-col items-center">
+                    
+                    <h3 class="text-xl md:text-2xl font-black text-amber-900 mb-1">퀴즈 정답입니다!</h3>
+                    <p class="text-xs md:text-sm text-amber-700 font-bold mb-4" id="result-subtitle">어은리 지명 유래를 완벽히 이해하셨네요!</p>
+
+                    <!-- Stamp Graphic Target Container -->
+                    <div class="relative my-4 w-48 h-48 flex items-center justify-center border-4 border-dashed border-amber-300 rounded-full bg-amber-100/50">
+                        
+                        <!-- Traditional Korean " 참 잘 했 어 요 " Stamp graphic -->
+                        <div id="stamp-graphic" class="w-40 h-40 border-8 border-red-600 rounded-full flex flex-col items-center justify-center text-red-600 font-black p-2 bg-red-500/10 shadow-inner stamp-animation" style="transform: rotate(-12deg);">
+                            <div class="border-2 border-red-600 rounded-full w-full h-full flex flex-col items-center justify-center p-1">
+                                <i class="fa-solid fa-award text-3xl mb-1"></i>
+                                <span class="font-pen text-3xl leading-none">참 잘 했 어 요</span>
+                                <span class="text-[10px] tracking-widest mt-1 text-red-700 font-sans font-bold">화성시 장안면 어은리</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Explanation Card -->
+                    <div id="result-explanation" class="bg-white p-4 rounded-2xl border border-amber-200 text-xs md:text-sm text-slate-700 text-left my-2 w-full shadow-sm">
+                        <!-- Filled via JS -->
+                    </div>
+
+                    <!-- Action Button -->
+                    <button id="btn-finish-mission" class="mt-4 w-full py-3.5 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-lg rounded-2xl shadow-lg hover:from-emerald-600 hover:to-teal-700 transform active:scale-95 transition-all border-2 border-emerald-300 cursor-pointer">
+                        🏆 최종 탐험 성공 결과 확인하기!
+                    </button>
+                </div>
+            </section>
+
+
+            <!-- ---------------------------------------------------------------- -->
+            <!-- SCENE 5: FINAL GAME CLEAR SCREEN -->
+            <!-- ---------------------------------------------------------------- -->
+            <section id="screen-clear" class="absolute inset-0 z-50 bg-gradient-to-b from-blue-900 via-sky-800 to-teal-900 text-white flex flex-col items-center justify-center p-6 text-center hidden">
+                
+                <div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border-4 border-amber-400 max-w-xl w-full flex flex-col items-center shadow-2xl">
+                    <div class="text-6xl text-amber-300 mb-3 animate-bounce">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    
+                    <h2 class="text-3xl md:text-4xl font-black mb-2 text-amber-300 drop-shadow">
+                        어은리 탐험 성공!
+                    </h2>
+                    <p class="text-base md:text-lg font-bold text-sky-100 mb-6">
+                        축하합니다! 어은리의 지명 유래 퀴즈를 맞히고 미션을 완료하셨습니다!
+                    </p>
+
+                    <!-- Summary box -->
+                    <div class="bg-slate-900/60 p-5 rounded-2xl border border-white/20 text-left text-xs md:text-sm space-y-2 mb-6 w-full">
+                        <div class="font-bold text-amber-300 border-b border-white/10 pb-1 mb-2">📜 어은리(魚隱里) 지명 핵심 정리</div>
+                        <p>✓ <strong>어(魚)</strong>: 물고기 어 - 바닷물을 따라 흘러들어온 물고기들</p>
+                        <p>✓ <strong>은(隱)</strong>: 숨을 은 - 바위와 갯골에 몸을 숨겼던 장소</p>
+                        <p>✓ <strong>지형적 특징</strong>: 옛날 바닷물이 깊숙이 들어오던 수로(갯골) 지형</p>
+                        <p>✓ <strong>위치</strong>: 경기도 화성시 장안면 어은리</p>
+                    </div>
+
+                    <!-- Restart Button -->
+                    <button id="btn-restart" class="py-4 px-8 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-black text-xl rounded-full shadow-xl hover:from-amber-300 hover:to-orange-400 transform hover:scale-105 active:scale-95 transition-all border-2 border-white cursor-pointer">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> 다시 체험해보기
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+                        다음 물고기 낚으러 가기 🎣
+                    </button>
+                </div>
+            </section>
+
+
+            <!-- ---------------------------------------------------------------- -->
+            <!-- SCENE 5: FINAL GAME CLEAR SCREEN -->
+            <!-- ---------------------------------------------------------------- -->
+            <section id="screen-clear" class="absolute inset-0 z-50 bg-gradient-to-b from-blue-900 via-sky-800 to-teal-900 text-white flex flex-col items-center justify-center p-6 text-center hidden">
+                
+                <div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border-4 border-amber-400 max-w-xl w-full flex flex-col items-center shadow-2xl">
+                    <div class="text-6xl text-amber-300 mb-3 animate-bounce">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    
+                    <h2 class="text-3xl md:text-4xl font-black mb-2 text-amber-300 drop-shadow">
+                        어은리 탐험 성공!
+                    </h2>
+                    <p class="text-base md:text-lg font-bold text-sky-100 mb-6">
+                        축하합니다! 모든 도장을 모아 어은리의 지명 박사가 되었습니다!
+                    </p>
+
+                    <!-- Summary box -->
+                    <div class="bg-slate-900/60 p-5 rounded-2xl border border-white/20 text-left text-xs md:text-sm space-y-2 mb-6 w-full">
+                        <div class="font-bold text-amber-300 border-b border-white/10 pb-1 mb-2">📜 어은리(魚隱里) 배움 요약</div>
+                        <p>✓ <strong>어(魚)</strong>: 물고기 어 - 바닷물을 따라 온 물고기들</p>
+                        <p>✓ <strong>은(隱)</strong>: 숨을 은 - 바위와 갯골에 몸을 숨겼던 곳</p>
+                        <p>✓ <strong>지형적 특징</strong>: 옛날 바닷물이 깊숙이 들어오던 수로(갯골) 지형</p>
+                        <p>✓ <strong>위치</strong>: 경기도 화성시 장안면 어은리</p>
+                    </div>
+
+                    <!-- Restart Button -->
+                    <button id="btn-restart" class="py-4 px-8 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-black text-xl rounded-full shadow-xl hover:from-amber-300 hover:to-orange-400 transform hover:scale-105 active:scale-95 transition-all border-2 border-white cursor-pointer">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> 다시 체험해보기
+                    </button>
+                </div>
+            </section>
+
+        </main>
+        
+        <!-- Footer Info -->
+        <footer class="bg-slate-900 text-slate-400 text-center py-2 px-4 text-xs flex justify-between items-center border-t border-slate-800">
+            <span>경기도 화성시 장안면 어은리 지명 유래 인터랙티브 모듈</span>
+            <span class="text-slate-500"><i class="fa-solid fa-fish text-sky-500 mr-1"></i> 魚 (물고기 어) 隱 (숨을 은)</span>
+        </footer>
+
+    </div>
+
+    <!-- Javascript Logic -->
+    <script>
+        /**
+         * 화성시 장안면 어은리(魚隱里) 지명 유래 게임 데이터 & 로직 (단일 퀴즈/1회 완결 버전)
+         */
+
+        // 1. Single Main Quiz Data
+        const MAIN_QUIZ = {
+            id: 1,
+            fishName: "어은리 숭어",
+            fishIcon: "🐟",
+            fishColor: "#3b82f6",
+            question: "어은리(魚隱里)의 '어(魚)' 자는 무엇과 관련된 한자일까요?",
+            options: [
+                { text: "1. 물고기", correct: true },
+                { text: "2. 어둠", correct: false },
+                { text: "3. 어머니", correct: false },
+                { text: "4. 언덕", correct: false }
+            ],
+            explanation: "<b>'어(魚)'</b> 자는 <b>물고기</b>를 뜻하고, <b>'은(隱)'</b> 자는 <b>숨을 은</b> 자입니다. 옛날 바닷물이 깊이 들어와 수많은 물고기들이 바위 뒤에 숨어들었던 모습에서 유래했습니다."
+        };
+
+        // Game State Variables
+        let isGameRunning = false;
+        let caughtFishData = null;
+        let animationFrameId = null;
+
+        // HTML Elements
+        const screenIntro = document.getElementById('screen-intro');
+        const screenGame = document.getElementById('screen-game');
+        const screenQuiz = document.getElementById('screen-quiz');
+        const screenResult = document.getElementById('screen-result');
+        const screenClear = document.getElementById('screen-clear');
+
+        const btnStart = document.getElementById('btn-start');
+        const btnFinishMission = document.getElementById('btn-finish-mission');
+        const btnRestart = document.getElementById('btn-restart');
+
+        const stampCountEl = document.getElementById('stamp-count');
+        const canvas = document.getElementById('fishingCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Quiz UI elements
+        const quizCard = document.getElementById('quiz-card');
+        const quizNumberTag = document.getElementById('quiz-number-tag');
+        const caughtFishIcon = document.getElementById('caught-fish-icon');
+        const caughtFishName = document.getElementById('caught-fish-name');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const quizFeedback = document.getElementById('quiz-feedback');
+
+        const resultExplanation = document.getElementById('result-explanation');
+
+        // Fish Sprites Array for Canvas
+        let fishes = [];
+
+        // Resize Canvas to Container
+        function resizeCanvas() {
+            if (!screenGame.classList.contains('hidden')) {
+                canvas.width = screenGame.clientWidth;
+                canvas.height = screenGame.clientHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Fish Class for Canvas Simulation
+        class Fish {
+            constructor(data) {
+                this.data = data;
+                this.resetPosition();
+            }
+
+            resetPosition() {
+                this.radius = 28 + Math.random() * 10;
+                this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
+                this.y = (canvas.height * 0.35) + Math.random() * (canvas.height * 0.5);
+                this.speed = 1.2 + Math.random() * 1.5;
+                this.direction = this.x < 0 ? 1 : -1;
+                this.wiggle = Math.random() * Math.PI * 2;
+                this.wiggleSpeed = 0.08 + Math.random() * 0.05;
+            }
+
+            update() {
+                this.x += this.speed * this.direction;
+                this.wiggle += this.wiggleSpeed;
+
+                // Screen Wrap / Re-spawn
+                if (this.direction === 1 && this.x > canvas.width + 60) {
+                    this.resetPosition();
+                } else if (this.direction === -1 && this.x < -60) {
+                    this.resetPosition();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y + Math.sin(this.wiggle) * 4);
+                
+                if (this.direction === -1) {
+                    ctx.scale(-1, 1);
+                }
+
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 8;
+
+                // Body
+                ctx.fillStyle = this.data.fishColor;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.radius, this.radius * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(-this.radius * 0.8, 0);
+                ctx.lineTo(-this.radius * 1.5, -this.radius * 0.6);
+                ctx.lineTo(-this.radius * 1.5, this.radius * 0.6);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eye
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(this.radius * 0.5, -this.radius * 0.2, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(this.radius * 0.5 + 1, -this.radius * 0.2, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Fin
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(-this.radius * 0.1, 0);
+                ctx.lineTo(-this.radius * 0.5, this.radius * 0.4);
+                ctx.lineTo(0, this.radius * 0.2);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            isClicked(clickX, clickY) {
+                const dist = Math.hypot(this.x - clickX, this.y - clickY);
+                return dist < this.radius + 15;
+            }
+        }
+
+        // Initialize Canvas Fish Pool
+        function initFishPool() {
+            fishes = [];
+            fishes.push(new Fish(MAIN_QUIZ));
+            for (let i = 0; i < 2; i++) {
+                fishes.push(new Fish({
+                    ...MAIN_QUIZ,
+                    fishColor: i === 0 ? '#14b8a6' : '#f59e0b',
+                    fishName: i === 0 ? '갯골 망둥어' : '숨은 농어'
+                }));
+            }
+        }
+
+        // Render Background underwater rocks & seaweed
+        function drawUnderwaterEnvironment() {
+            const waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            waterGradient.addColorStop(0, '#7dd3fc');
+            waterGradient.addColorStop(0.3, '#38bdf8');
+            waterGradient.addColorStop(1, '#0284c7');
+            ctx.fillStyle = waterGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Underwater Rocks
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.arc(100, canvas.height + 20, 90, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(canvas.width - 120, canvas.height + 40, 120, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Seaweed
+            ctx.strokeStyle = '#15803d';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+
+            const time = Date.now() * 0.002;
+
+            for (let x = 40; x < canvas.width; x += 160) {
+                ctx.beginPath();
+                ctx.moveTo(x, canvas.height);
+                const sway = Math.sin(time + x) * 15;
+                ctx.quadraticCurveTo(x + sway, canvas.height - 60, x + sway * 0.5, canvas.height - 110);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = 'bold 12px Gothic A1';
+            ctx.fillText('🌊 바닷물이 들어와 물고기가 숨던 갯골 바위', 20, canvas.height - 15);
+        }
+
+        // Animation Loop
+        function animate() {
+            if (!isGameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawUnderwaterEnvironment();
+
+            fishes.forEach(fish => {
+                fish.update();
+                fish.draw();
+            });
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Start Fishing Game Scene
+        function startGameScene() {
+            screenIntro.classList.add('hidden');
+            screenQuiz.classList.add('hidden');
+            screenResult.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+
+            resizeCanvas();
+            initFishPool();
+            isGameRunning = true;
+            animate();
+        }
+
+        // Handle Canvas Click / Touch
+        canvas.addEventListener('click', (e) => {
+            if (!isGameRunning) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            createRipple(e.clientX, e.clientY);
+
+            for (let i = 0; i < fishes.length; i++) {
+                if (fishes[i].isClicked(clickX, clickY)) {
+                    caughtFishData = fishes[i].data;
+                    triggerCatchEvent(clickX, clickY);
+                    break;
+                }
+            }
+        });
+
+        function createRipple(x, y) {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = `${x - 20}px`;
+            ripple.style.top = `${y - 20}px`;
+            ripple.style.width = '40px';
+            ripple.style.height = '40px';
+            document.body.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 800);
+        }
+
+        function triggerCatchEvent(x, y) {
+            isGameRunning = false;
+            cancelAnimationFrame(animationFrameId);
+
+            confetti({
+                particleCount: 40,
+                spread: 60,
+                origin: { x: x / window.innerWidth, y: y / window.innerHeight }
+            });
+
+            setTimeout(() => {
+                showQuizModal();
+            }, 500);
+        }
+
+        // Show Quiz Modal
+        function showQuizModal() {
+            quizNumberTag.textContent = `Q1`;
+            caughtFishIcon.textContent = MAIN_QUIZ.fishIcon;
+            caughtFishName.textContent = caughtFishData ? caughtFishData.fishName : MAIN_QUIZ.fishName;
+            quizQuestion.textContent = MAIN_QUIZ.question;
+
+            quizOptions.innerHTML = '';
+            quizFeedback.classList.add('hidden');
+
+            MAIN_QUIZ.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-2xl font-bold border-2 border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-400 active:scale-98 transition-all flex justify-between items-center text-slate-700 text-sm md:text-base";
+                btn.innerHTML = `<span>${opt.text}</span> <i class="fa-regular fa-circle text-slate-300"></i>`;
+                
+                btn.addEventListener('click', () => handleAnswer(opt, btn));
+                quizOptions.appendChild(btn);
+            });
+
+            screenQuiz.classList.remove('hidden');
+            setTimeout(() => {
+                quizCard.classList.remove('scale-95', 'opacity-0');
+                quizCard.classList.add('scale-100', 'opacity-100');
+            }, 50);
+        }
+
+        // Handle Answer
+        function handleAnswer(selectedOption, optionBtn) {
+            const allBtns = quizOptions.querySelectorAll('button');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selectedOption.correct) {
+                optionBtn.classList.remove('bg-slate-50', 'border-slate-200');
+                optionBtn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+                optionBtn.querySelector('i').className = "fa-solid fa-circle-check text-emerald-600 text-xl";
+
+                quizFeedback.className = "mt-4 p-3 rounded-xl text-center text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
+                quizFeedback.innerHTML = "🎉 정답입니다! 어은리 지명 유래를 잘 맞히셨어요!";
+                quizFeedback.classList.remove('hidden');
+
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+
+                setTimeout(() => {
+                    showStampRewardScreen();
+                }, 1200);
+
+            } else {
+                optionBtn.classList.remove('bg-slate-50', 'border-slate-200');
+                optionBtn.classList.add('bg-rose-100', 'border-rose-400', 'text-rose-900');
+                optionBtn.querySelector('i').className = "fa-solid fa-circle-xmark text-rose-500 text-xl";
+
+                quizFeedback.className = "mt-4 p-3 rounded-xl text-center text-sm font-bold bg-rose-100 text-rose-800 border border-rose-300";
+                quizFeedback.innerHTML = "💡 아쉬워요! 다시 한번 정답을 생각해보세요.";
+                quizFeedback.classList.remove('hidden');
+
+                setTimeout(() => {
+                    allBtns.forEach(b => b.disabled = false);
+                    optionBtn.classList.remove('bg-rose-100', 'border-rose-400', 'text-rose-900');
+                    optionBtn.classList.add('bg-slate-50', 'border-slate-200');
+                    optionBtn.querySelector('i').className = "fa-regular fa-circle text-slate-300";
+                    quizFeedback.classList.add('hidden');
+                }, 1500);
+            }
+        }
+
+        // Show Mission Complete Stamp Screen
+        function showStampRewardScreen() {
+            screenQuiz.classList.add('hidden');
+            screenResult.classList.remove('hidden');
+
+            stampCountEl.textContent = '1';
+
+            resultExplanation.innerHTML = `
+                <div class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-book-open mr-1"></i> 지명 유래 배움터</div>
+                <div>${MAIN_QUIZ.explanation}</div>
+            `;
+
+            const stampElem = document.getElementById('stamp-graphic');
+            stampElem.classList.remove('stamp-animation');
+            void stampElem.offsetWidth;
+            stampElem.classList.add('stamp-animation');
+        }
+
+        // Finish mission and show final screen
+        btnFinishMission.addEventListener('click', () => {
+            screenResult.classList.add('hidden');
+            showGameClearScreen();
+        });
+
+        // Show Final Game Clear
+        function showGameClearScreen() {
+            screenClear.classList.remove('hidden');
+            confetti({
+                particleCount: 200,
+                spread: 100,
+                origin: { y: 0.5 }
+            });
+        }
+
+        // Restart Game
+        btnRestart.addEventListener('click', () => {
+            stampCountEl.textContent = '0';
+            screenClear.classList.add('hidden');
+            screenIntro.classList.remove('hidden');
+        });
+
+        // Event Listeners
+        btnStart.addEventListener('click', startGameScene);
+
+    </script>
+</body>
+</html>

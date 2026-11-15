@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>독정3리의 전설 정령 감드러지를 찾아라!</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Serif KR, Gamja Flower) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Noto+Serif+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Serif KR', serif;
+            background-color: #1a1e17;
+            color: #f3f4f6;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .font-gamja {
+            font-family: 'Gamja Flower', cursive;
+        }
+
+        /* Custom Stamp Animation */
+        @keyframes stamp-bounce {
+            0% {
+                transform: scale(3) rotate(-15deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(0.9) rotate(-12deg);
+                opacity: 0.9;
+            }
+            70% {
+                transform: scale(1.05) rotate(-10deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(-12deg);
+                opacity: 1;
+            }
+        }
+
+        .animate-stamp {
+            animation: stamp-bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Shimmer effect for legendary elements */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .gold-shimmer {
+            background: linear-gradient(90deg, #d4af37 0%, #fff6cb 50%, #d4af37 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shimmer 4s linear infinite;
+        }
+
+        /* Pulse aura for spirit particles */
+        @keyframes aura-glow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(167, 243, 208, 0.6)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 15px rgba(253, 224, 71, 0.9)); transform: scale(1.05); }
+        }
+
+        .spirit-found {
+            animation: aura-glow 2s infinite ease-in-out;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #272f24;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #5d7052;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-emerald-950 text-amber-50">
+
+    <!-- Audio Effects (Synthesized using Web Audio API in JS) -->
+
+    <!-- Header Section -->
+    <header class="w-full bg-gradient-to-b from-stone-900 to-transparent p-4 text-center relative z-20 border-b border-amber-900/40">
+        <div class="max-w-4xl mx-auto flex justify-between items-center px-2">
+            <div class="flex items-center space-x-3">
+                <span class="px-3 py-1 bg-amber-900/80 text-amber-200 border border-amber-500/50 rounded-full text-xs font-semibold tracking-widest uppercase">전설 LEGEND</span>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-amber-100 flex items-center gap-2">
+                    <i class="fa-solid font-gamja text-emerald-400">🍃</i> 독정3리 역사 탐험
+                </h1>
+            </div>
+            <!-- Stage Status Indicator -->
+            <div id="stage-indicator" class="text-sm font-medium text-amber-300/80 bg-stone-900/80 px-3 py-1.5 rounded-lg border border-stone-700">
+                1단계: 감드러지 정령 찾기
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow flex flex-col items-center justify-center p-2 sm:p-4 relative">
+        
+        <!-- STAGE 1: HIDDEN SPIRITS GAME -->
+        <section id="stage-1" class="w-full max-w-4xl flex flex-col items-center">
+            <!-- Game Canvas / Scene Container -->
+            <div class="w-full bg-stone-900/90 rounded-2xl border-2 border-amber-700/50 p-3 sm:p-4 shadow-2xl relative overflow-hidden">
+                <!-- Title & Instruction Banner -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-3 bg-stone-800/80 p-3 rounded-xl border border-stone-700">
+                    <div>
+                        <h2 class="text-lg font-bold text-emerald-300 flex items-center gap-2">
+                            <span>"깊은 골짜기에 숨은 아늑한 정령을 찾아라!"</span>
+                        </h2>
+                        <p class="text-xs text-amber-200/70 mt-0.5">정령을 찾을 때마다 독정3리의 숨겨진 역사와 유래가 하나씩 해금됩니다.</p>
+                    </div>
+                    <!-- Counter badge -->
+                    <div class="mt-2 sm:mt-0 flex items-center gap-2 bg-emerald-950 px-4 py-2 rounded-lg border border-emerald-600/50">
+                        <span class="text-xs text-emerald-300">발견한 정령:</span>
+                        <span id="spirit-count" class="text-xl font-black text-amber-300">0 / 3</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Game Art Container -->
+                <div id="game-scene" class="relative w-full aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden shadow-inner border border-stone-800 cursor-crosshair bg-stone-950">
+                    
+                    <!-- SVG Background Art (Mythical Landscape inspired by image) -->
+                    <svg viewBox="0 0 1000 562.5" class="w-full h-full object-cover select-none" id="landscape-svg">
+                        <defs>
+                            <!-- Gradients for Mountain Scene -->
+                            <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#2a3d31"/>
+                                <stop offset="60%" stop-color="#4a5d4a"/>
+                                <stop offset="100%" stop-color="#8ba180"/>
+                            </linearGradient>
+                            <linearGradient id="mountGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1f2c22"/>
+                                <stop offset="100%" stop-color="#0d140e"/>
+                            </linearGradient>
+                            <linearGradient id="mountGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#3d4f3b"/>
+                                <stop offset="100%" stop-color="#1d2a1c"/>
+                            </linearGradient>
+                            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#a7f3d0" stop-opacity="0.8"/>
+                                <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.9"/>
+                                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.8"/>
+                            </linearGradient>
+                            <radialGradient id="mistGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+                                <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Sky & Distant Sun Glow -->
+                        <rect width="1000" height="562.5" fill="url(#skyGrad)"/>
+                        <circle cx="500" cy="180" r="180" fill="#fef08a" opacity="0.15" filter="blur(20px)"/>
+
+                        <!-- Far Mountains -->
+                        <path d="M 0,320 Q 200,180 400,280 T 800,200 T 1000,250 L 1000,562.5 L 0,562.5 Z" fill="url(#mountGrad1)" opacity="0.85"/>
+                        <path d="M 150,300 Q 350,140 600,260 T 1000,180 L 1000,562.5 L 150,562.5 Z" fill="url(#mountGrad2)" opacity="0.7"/>
+
+                        <!-- Waterfalls & Valley River -->
+                        <path d="M 480,260 Q 470,330 430,380 T 320,480 T 200,562.5 L 280,562.5 Q 400,500 480,410 T 520,260 Z" fill="url(#waterGrad)"/>
+                        <!-- Waterfall 2 -->
+                        <path d="M 720,280 Q 710,360 760,420 T 850,562.5 L 910,562.5 Q 810,440 760,350 Z" fill="url(#waterGrad)" opacity="0.8"/>
+
+                        <!-- Midground Rocks & Ridge -->
+                        <path d="M -20,400 Q 180,260 380,380 T 700,340 T 1020,380 L 1020,562.5 L -20,562.5 Z" fill="#1b261b"/>
+                        
+                        <!-- Trees & Flowers Vegetation Elements -->
+                        <g fill="#2d402b">
+                            <!-- Left Forest -->
+                            <circle cx="80" cy="350" r="45"/>
+                            <circle cx="120" cy="330" r="55"/>
+                            <circle cx="60" cy="380" r="40"/>
+                            <!-- Right Forest -->
+                            <circle cx="880" cy="320" r="60"/>
+                            <circle cx="930" cy="350" r="50"/>
+                        </g>
+
+                        <!-- White Blossom Accents -->
+                        <g fill="#fff" opacity="0.9">
+                            <circle cx="100" cy="320" r="3"/><circle cx="110" cy="325" r="2.5"/><circle cx="95" cy="335" r="2"/>
+                            <circle cx="870" cy="300" r="3"/><circle cx="890" cy="310" r="2.5"/><circle cx="855" cy="305" r="3.5"/>
+                            <circle cx="340" cy="390" r="3"/><circle cx="355" cy="385" r="2"/>
+                        </g>
+
+                        <!-- Foreground Cliffs (Left & Right framing) -->
+                        <path d="M -10,200 Q 120,240 180,420 T 100,562.5 L -10,562.5 Z" fill="#0f1710"/>
+                        <path d="M 1010,220 Q 880,300 850,480 T 920,562.5 L 1010,562.5 Z" fill="#0f1710"/>
+
+                        <!-- Mystical Village Houses (Dokjeong 3-ri hidden in valley) -->
+                        <g transform="translate(560, 320) scale(0.6)" opacity="0.85">
+                            <!-- Hanok Roofs -->
+                            <polygon points="20,40 50,20 80,40" fill="#332211"/>
+                            <rect x="28" y="40" width="44" height="25" fill="#d4b08c"/>
+                            <polygon points="70,45 100,28 130,45" fill="#332211"/>
+                            <rect x="78" y="45" width="44" height="20" fill="#c4a07c"/>
+                        </g>
+
+                        <!-- Valley Mist Effect Layer -->
+                        <rect x="200" y="240" width="600" height="200" fill="url(#mistGrad)"/>
+                    </svg>
+
+                    <!-- HIDDEN SPIRIT 1: Mountain Crest Spirit (Camouflaged on top-left cliff) -->
+                    <div id="spirit-target-1" onclick="findSpirit(1)" 
+                         class="absolute cursor-pointer transition-all duration-300 group"
+                         style="top: 18%; left: 12%; width: 9%; height: 16%; font-size: 0.6rem;">
+                        <!-- Unfound camouflage art -->
+                        <div class="unfound-graphic w-full h-full opacity-40 hover:opacity-80 transition-opacity flex items-center justify-center">
+                            <!-- Camouflaged leafy spirit shape matching the mountain -->
+                            <svg viewBox="0 0 100 100" class="w-full h-full filter drop-shadow">
+                                <path d="M50 10 C30 20 10 40 20 70 C30 90 70 90 80 70 C90 40 70 20 50 10 Z" fill="#2d4229" stroke="#486342" stroke-width="2"/>
+                                <circle cx="40" cy="45" r="4" fill="#a7f3d0"/>
+                                <circle cx="60" cy="45" r="4" fill="#a7f3d0"/>
+                                <path d="M40 20 Q50 5 60 20" stroke="#fef08a" stroke-width="3" fill="none"/>
+                            </svg>
+                        </div>
+                        <!-- Found Glow Marker -->
+                        <div class="found-graphic hidden w-full h-full flex flex-col items-center justify-center spirit-found">
+                            <img src="https://api.iconify.design/fluent-emoji:dragon-face.svg" class="w-full h-full filter drop-shadow-[0_0_10px_rgba(250,204,21,0.9)]" alt="감드러지 정령">
+                            <span class="bg-amber-900/90 text-amber-200 text-[10px] px-1.5 py-0.5 rounded border border-amber-400 font-bold -mt-2 shadow">감드러지</span>
+                        </div>
+                    </div>
+
+                    <!-- HIDDEN SPIRIT 2: Waterfall / Stream Spirit (Camouflaged near central stream) -->
+                    <div id="spirit-target-2" onclick="findSpirit(2)" 
+                         class="absolute cursor-pointer transition-all duration-300 group"
+                         style="top: 55%; left: 44%; width: 8.5%; height: 15%;">
+                        <!-- Unfound camouflage art -->
+                        <div class="unfound-graphic w-full h-full opacity-35 hover:opacity-75 transition-opacity flex items-center justify-center">
+                            <svg viewBox="0 0 100 100" class="w-full h-full">
+                                <path d="M30 20 Q50 0 70 20 T80 70 Q50 100 20 70 Z" fill="#234e52" stroke="#38bdf8" stroke-width="1.5"/>
+                                <circle cx="42" cy="50" r="3" fill="#ffffff"/>
+                                <circle cx="58" cy="50" r="3" fill="#ffffff"/>
+                            </svg>
+                        </div>
+                        <!-- Found Glow Marker -->
+                        <div class="found-graphic hidden w-full h-full flex flex-col items-center justify-center spirit-found">
+                            <img src="https://api.iconify.design/fluent-emoji:dragon-face.svg" class="w-full h-full filter drop-shadow-[0_0_10px_rgba(56,189,248,0.9)]" alt="거묵골 정령">
+                            <span class="bg-amber-900/90 text-amber-200 text-[10px] px-1.5 py-0.5 rounded border border-amber-400 font-bold -mt-2 shadow">거묵골 정령</span>
+                        </div>
+                    </div>
+
+                    <!-- HIDDEN SPIRIT 3: Deep Valley / Rock Spirit (Camouflaged near right cliff & village) -->
+                    <div id="spirit-target-3" onclick="findSpirit(3)" 
+                         class="absolute cursor-pointer transition-all duration-300 group"
+                         style="top: 42%; left: 78%; width: 8%; height: 14%;">
+                        <!-- Unfound camouflage art -->
+                        <div class="unfound-graphic w-full h-full opacity-30 hover:opacity-75 transition-opacity flex items-center justify-center">
+                            <svg viewBox="0 0 100 100" class="w-full h-full">
+                                <path d="M40 10 C10 30 20 80 50 90 C80 80 90 30 60 10 Z" fill="#26231d" stroke="#6b5d4d" stroke-width="2"/>
+                                <circle cx="40" cy="40" r="3" fill="#fef08a"/>
+                                <circle cx="60" cy="40" r="3" fill="#fef08a"/>
+                            </svg>
+                        </div>
+                        <!-- Found Glow Marker -->
+                        <div class="found-graphic hidden w-full h-full flex flex-col items-center justify-center spirit-found">
+                            <img src="https://api.iconify.design/fluent-emoji:dragon-face.svg" class="w-full h-full filter drop-shadow-[0_0_10px_rgba(167,243,208,0.9)]" alt="골짜기 정령">
+                            <span class="bg-amber-900/90 text-amber-200 text-[10px] px-1.5 py-0.5 rounded border border-amber-400 font-bold -mt-2 shadow">독정 정령</span>
+                        </div>
+                    </div>
+
+                    <!-- Click feedback popup notification -->
+                    <div id="click-feedback" class="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500/90 text-stone-950 font-bold px-4 py-1.5 rounded-full text-xs sm:text-sm shadow-lg pointer-events-none opacity-0 transition-opacity duration-300">
+                        정령을 찾았습니다!
+                    </div>
+                </div>
+
+                <!-- Unlocked History Cards Display Bar -->
+                <div class="mt-4 bg-stone-950/80 p-3 rounded-xl border border-amber-900/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-scroll"></i> 해금된 독정3리 역사 정보 (<span id="unlocked-count">0</span>/3)
+                        </h3>
+                        <button id="go-quiz-btn" onclick="transitionToStage2()" disabled class="px-4 py-1.5 bg-stone-700 text-stone-400 font-bold text-xs rounded-lg cursor-not-allowed transition-all">
+                            3개 정보 수집 후 퀴즈 도전 <i class="fa-solid fa-lock ml-1"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 3 Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <!-- Card 1 -->
+                        <div id="info-card-1" class="bg-stone-900 border border-stone-800 p-2.5 rounded-lg opacity-50 transition-all">
+                            <div class="font-bold text-amber-400 mb-1 flex items-center gap-1">
+                                <span>🔒 1. 감드러지의 유래</span>
+                            </div>
+                            <p class="text-stone-400 text-[11px] leading-tight">정령 1번을 찾으면 해금됩니다.</p>
+                        </div>
+                        <!-- Card 2 -->
+                        <div id="info-card-2" class="bg-stone-900 border border-stone-800 p-2.5 rounded-lg opacity-50 transition-all">
+                            <div class="font-bold text-amber-400 mb-1 flex items-center gap-1">
+                                <span>🔒 2. 거묵골의 유래</span>
+                            </div>
+                            <p class="text-stone-400 text-[11px] leading-tight">정령 2번을 찾으면 해금됩니다.</p>
+                        </div>
+                        <!-- Card 3 -->
+                        <div id="info-card-3" class="bg-stone-900 border border-stone-800 p-2.5 rounded-lg opacity-50 transition-all">
+                            <div class="font-bold text-amber-400 mb-1 flex items-center gap-1">
+                                <span>🔒 3. 독정3리 마을</span>
+                            </div>
+                            <p class="text-stone-400 text-[11px] leading-tight">정령 3번을 찾으면 해금됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Helper Footnote -->
+                <div class="mt-3 flex justify-between items-center text-xs text-amber-200/60 px-1">
+                    <span>💡 힌트: 산꼭대기 바위, 중앙 시냇가, 우측 골짜기 그늘을 자세히 살펴보세요!</span>
+                    <button onclick="showHint()" class="underline hover:text-amber-300 text-amber-400/80">힌트 반짝이기</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- HISTORY INFO POPUP MODAL -->
+        <div id="info-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-stone-900 border-2 border-amber-500 max-w-md w-full rounded-2xl p-6 shadow-2xl relative animate-stamp">
+                <div class="text-center mb-4">
+                    <span id="modal-tag" class="px-3 py-1 bg-amber-900/80 text-amber-300 border border-amber-600/50 rounded-full text-xs font-bold">역사 정보 해금</span>
+                    <h3 id="modal-title" class="text-2xl font-bold text-amber-200 mt-2">지명 유래</h3>
+                </div>
+
+                <div class="bg-stone-800/90 p-4 rounded-xl border border-stone-700 mb-6">
+                    <p id="modal-body" class="text-stone-200 text-sm sm:text-base leading-relaxed">
+                        내용...
+                    </p>
+                </div>
+
+                <button onclick="closeModal()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black rounded-xl shadow-lg transition-transform active:scale-95 text-sm">
+                    확인하고 계속 탐험하기
+                </button>
+            </div>
+        </div>
+
+        <!-- STAGE 2: HISTORICAL QUIZ (Hidden by default) -->
+        <section id="stage-2" class="w-full max-w-2xl hidden flex-col items-center">
+            <div class="w-full bg-stone-900/95 rounded-2xl border-2 border-amber-600/60 p-5 sm:p-7 shadow-2xl relative">
+                <!-- Quiz Header -->
+                <div class="text-center mb-6">
+                    <span class="inline-block px-3 py-1 bg-amber-900/60 text-amber-300 border border-amber-600/40 rounded-full text-xs font-bold mb-2">2단계: 독정3리 역사 퀴즈</span>
+                    <h2 class="text-xl sm:text-2xl font-bold text-amber-100">독정3리 지명 유래 관문</h2>
+                    <p class="text-xs sm:text-sm text-stone-300 mt-1">정령 3마리를 모두 모으셨군요! 마을의 전설을 완성하기 위해 퀴즈를 풀어주세요.</p>
+                </div>
+
+                <!-- Question Box -->
+                <div class="bg-stone-800/90 p-4 sm:p-5 rounded-xl border border-amber-900/50 mb-6 shadow-inner">
+                    <p class="text-sm sm:text-base text-amber-100 leading-relaxed font-medium">
+                        <span class="text-amber-400 font-bold">Q.</span> 독정3리의 두 가지 옛 지명 유래 중, <span class="text-emerald-300 font-semibold underline underline-offset-4">마을의 흙이나 분위기가 먹처럼 검고 아늑하다</span> 하여 붙여진 순우리말 이름은 무엇일까요?
+                    </p>
+                </div>
+
+                <!-- Multiple Choice Options -->
+                <div class="space-y-3" id="quiz-options">
+                    <button onclick="checkAnswer(1)" class="w-full text-left p-3.5 sm:p-4 rounded-xl bg-stone-800/80 hover:bg-amber-900/40 border border-stone-700 hover:border-amber-500/60 text-amber-100 font-medium transition-all flex items-center justify-between group">
+                        <span class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-stone-700 group-hover:bg-amber-600 text-stone-200 group-hover:text-amber-950 flex items-center justify-center text-xs font-bold transition-colors">1</span>
+                            <span>감드러지</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 text-amber-400 transition-opacity"></i>
+                    </button>
+
+                    <button onclick="checkAnswer(2)" class="w-full text-left p-3.5 sm:p-4 rounded-xl bg-stone-800/80 hover:bg-amber-900/40 border border-stone-700 hover:border-amber-500/60 text-amber-100 font-medium transition-all flex items-center justify-between group">
+                        <span class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-stone-700 group-hover:bg-amber-600 text-stone-200 group-hover:text-amber-950 flex items-center justify-center text-xs font-bold transition-colors">2</span>
+                            <span class="font-bold text-amber-300">거묵골</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 text-amber-400 transition-opacity"></i>
+                    </button>
+
+                    <button onclick="checkAnswer(3)" class="w-full text-left p-3.5 sm:p-4 rounded-xl bg-stone-800/80 hover:bg-amber-900/40 border border-stone-700 hover:border-amber-500/60 text-amber-100 font-medium transition-all flex items-center justify-between group">
+                        <span class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-stone-700 group-hover:bg-amber-600 text-stone-200 group-hover:text-amber-950 flex items-center justify-center text-xs font-bold transition-colors">3</span>
+                            <span>독정골</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 text-amber-400 transition-opacity"></i>
+                    </button>
+
+                    <button onclick="checkAnswer(4)" class="w-full text-left p-3.5 sm:p-4 rounded-xl bg-stone-800/80 hover:bg-amber-900/40 border border-stone-700 hover:border-amber-500/60 text-amber-100 font-medium transition-all flex items-center justify-between group">
+                        <span class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-stone-700 group-hover:bg-amber-600 text-stone-200 group-hover:text-amber-950 flex items-center justify-center text-xs font-bold transition-colors">4</span>
+                            <span>먹빛골</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 text-amber-400 transition-opacity"></i>
+                    </button>
+                </div>
+
+                <!-- Quiz Feedback Alert -->
+                <div id="quiz-feedback" class="mt-4 p-3 rounded-lg text-center font-bold text-sm hidden"></div>
+            </div>
+        </section>
+
+        <!-- STAGE 3: SUCCESS & STAMP CLEAR (Hidden by default) -->
+        <section id="stage-3" class="w-full max-w-3xl hidden flex-col items-center">
+            <div class="w-full bg-stone-900/95 rounded-2xl border-2 border-amber-500 p-6 sm:p-8 shadow-2xl text-center relative overflow-hidden">
+                
+                <!-- Background decorative rays -->
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
+
+                <!-- Top Announcement -->
+                <span class="px-4 py-1.5 bg-amber-500 text-stone-950 font-black text-xs rounded-full uppercase tracking-widest mb-3 inline-block">탐험 완수 SUCCESS</span>
+                
+                <h2 id="pass-title" class="text-3xl sm:text-4xl font-black text-amber-300 font-gamja tracking-wide my-2">
+                    합격하셨습니다!
+                </h2>
+                <p class="text-stone-300 text-sm mb-6">독정3리의 깊은 역사와 감드러지 정령의 비밀을 모두 밝혀내셨습니다.</p>
+
+                <!-- Historic Stamp Visual Component -->
+                <div class="relative my-6 py-4 flex justify-center items-center">
+                    <!-- Red Traditional Korean Seal/Stamp -->
+                    <div id="stamp-element" class="opacity-0 w-36 h-36 sm:w-44 sm:h-44 border-4 border-red-600 rounded-2xl flex flex-col items-center justify-center p-2 text-red-600 bg-red-950/20 shadow-[0_0_25px_rgba(220,38,38,0.5)] rotate-[-12deg] select-none">
+                        <div class="w-full h-full border-2 border-dashed border-red-600/80 rounded-xl flex flex-col items-center justify-center p-1">
+                            <span class="text-xs font-bold tracking-widest border-b border-red-600 pb-1 mb-1">독정3리 역사검증</span>
+                            <span class="text-2xl sm:text-3xl font-black tracking-wider my-1">通 (통)</span>
+                            <span class="text-[10px] font-semibold">감드러지 인증인</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward Collection Section: 3 Spirits -->
+                <div class="mt-8 border-t border-amber-900/60 pt-6">
+                    <h3 class="text-lg font-bold text-amber-200 mb-4 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-gem text-amber-400"></i> 획득한 독정3리 정령 도감 (3종)
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                        <!-- Card 1: 감드러지 -->
+                        <div class="bg-stone-800/90 rounded-xl p-4 border border-amber-700/50 flex flex-col justify-between hover:border-amber-400 transition-colors">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-2xl">🍃</span>
+                                    <div>
+                                        <h4 class="font-bold text-amber-300 text-sm">감드러지</h4>
+                                        <span class="text-[10px] text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800">지형 고유어</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-stone-300 leading-relaxed mt-2">
+                                    지형이 감아 돌아 들어가는 아늑한 골짜기 형태에서 나온 고유어 지명. 포근하게 감싸인 듯한 골짜기의 정령입니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: 거묵골 -->
+                        <div class="bg-stone-800/90 rounded-xl p-4 border border-amber-700/50 flex flex-col justify-between hover:border-amber-400 transition-colors">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-2xl">⛰️</span>
+                                    <div>
+                                        <h4 class="font-bold text-amber-300 text-sm">거묵골</h4>
+                                        <span class="text-[10px] text-amber-400 bg-amber-950 px-1.5 py-0.5 rounded border border-amber-800">옛 한자+순우리말</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-stone-300 leading-relaxed mt-2">
+                                    마을의 흙이나 분위기가 먹처럼 검고 아늑하다 하여 '감묵(甘墨)'이라 부르던 지명이 순우리말과 결합된 정령입니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: 독정3리의 전설 정령 -->
+                        <div class="bg-stone-800/90 rounded-xl p-4 border border-amber-700/50 flex flex-col justify-between hover:border-amber-400 transition-colors">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-2xl">✨</span>
+                                    <div>
+                                        <h4 class="font-bold text-amber-300 text-sm">독정3리 수호정령</h4>
+                                        <span class="text-[10px] text-purple-300 bg-purple-950 px-1.5 py-0.5 rounded border border-purple-800">전설 등급</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-stone-300 leading-relaxed mt-2">
+                                    감드러지와 거묵골이라는 아름다운 두 이름을 품은 깊은 골짜기 마을 독정3리를 수호하는 정령입니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Restart Button -->
+                <div class="mt-8">
+                    <button onclick="resetGame()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold rounded-xl shadow-lg transition-transform active:scale-95 text-sm">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> 처음부터 다시 탐험하기
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-3 text-xs text-stone-500 border-t border-stone-800 bg-stone-950">
+        독정3리 역사 문화 체험 콘텐츠 • 감드러지와 거묵골의 전설
+    </footer>
+
+    <!-- Game Logic Script -->
+    <script>
+        // State Management
+        let foundSpirits = [false, false, false];
+        let foundCount = 0;
+
+        // History Information Data
+        const historyData = {
+            1: {
+                title: "🍃 감드러지의 유래",
+                tag: "토속 순우리말 지명",
+                body: "<b>'감드러지'</b>는 지형이 감아 돌아 들어가는 아늑한 골짜기 형태에서 나온 고유어 지명입니다. 산줄기 사이에 감돌아 들어있어 외지에 잘 드러나지 않고 포근하게 감싸인 듯한 모양새를 따라 붙여졌습니다."
+            },
+            2: {
+                title: "⛰️ 거묵골 (甘墨)의 유래",
+                tag: "한자 + 순우리말 결합",
+                body: "<b>'거묵골'</b>은 마을의 흙이나 분위기가 먹처럼 검고 아늑하다 하여 <b>'감묵(甘墨)'</b>이라 부르던 옛 한자 지명이 토속 순우리말 발음과 결합하여 만들어진 지명입니다."
+            },
+            3: {
+                title: "🏡 독정3리 마을 이야기",
+                tag: "깊은 골짜기의 마을",
+                body: "<b>'독정3리'</b>는 감드러지와 거묵골이라는 두 가지 아름다운 이름을 품은 깊은 골짜기의 마을입니다. 아늑한 산세와 정겨운 역사를간직하고 있습니다."
+            }
+        };
+
+        // Audio Context for Sound Effects (Web Audio API)
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        // Play Sound Effect
+        function playSfx(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'find') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'stamp') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.2);
+                    gain.gain.setValueAtTime(0.8, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio play blocked or unsupported");
+            }
+        }
+
+        // STAGE 1: Spirit Click Handler
+        function findSpirit(id) {
+            if (foundSpirits[id - 1]) return; // Already found
+
+            foundSpirits[id - 1] = true;
+            foundCount++;
+
+            playSfx('find');
+
+            // Update UI element
+            const targetEl = document.getElementById(`spirit-target-${id}`);
+            targetEl.querySelector('.unfound-graphic').classList.add('hidden');
+            targetEl.querySelector('.found-graphic').classList.remove('hidden');
+
+            // Update Counter
+            document.getElementById('spirit-count').innerText = `${foundCount} / 3`;
+            document.getElementById('unlocked-count').innerText = foundCount;
+
+            // Unlock Card UI
+            const cardEl = document.getElementById(`info-card-${id}`);
+            cardEl.classList.remove('opacity-50');
+            cardEl.classList.add('bg-amber-950/60', 'border-amber-600/80');
+            cardEl.innerHTML = `
+                <div class="font-bold text-amber-300 mb-1 flex items-center gap-1">
+                    <span>${historyData[id].title}</span>
+                </div>
+                <p class="text-stone-300 text-[11px] leading-tight">${historyData[id].tag}</p>
+            `;
+
+            // Open Info Modal
+            openModal(id);
+
+            // Unlock Quiz Button if all 3 are found
+            if (foundCount === 3) {
+                const quizBtn = document.getElementById('go-quiz-btn');
+                quizBtn.disabled = false;
+                quizBtn.classList.remove('bg-stone-700', 'text-stone-400', 'cursor-not-allowed');
+                quizBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'shadow-lg', 'animate-pulse');
+                quizBtn.innerHTML = `독정3리 퀴즈 풀어보기 <i class="fa-solid fa-arrow-right ml-1"></i>`;
+            }
+        }
+
+        // Open Modal Function
+        function openModal(id) {
+            const modal = document.getElementById('info-modal');
+            const data = historyData[id];
+
+            document.getElementById('modal-tag').innerText = data.tag;
+            document.getElementById('modal-title').innerText = data.title;
+            document.getElementById('modal-body').innerHTML = data.body;
+
+            modal.classList.remove('hidden');
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('info-modal').classList.add('hidden');
+        }
+
+        // Feedback Popup
+        function showFeedback(text) {
+            const feedback = document.getElementById('click-feedback');
+            feedback.innerText = text;
+            feedback.classList.remove('opacity-0');
+            setTimeout(() => {
+                feedback.classList.add('opacity-0');
+            }, 1500);
+        }
+
+        // Hint feature
+        function showHint() {
+            for (let i = 1; i <= 3; i++) {
+                if (!foundSpirits[i - 1]) {
+                    const el = document.getElementById(`spirit-target-${i}`);
+                    el.classList.add('scale-125', 'brightness-150');
+                    setTimeout(() => {
+                        el.classList.remove('scale-125', 'brightness-150');
+                    }, 800);
+                }
+            }
+        }
+
+        // Transition to Stage 2 (Quiz)
+        function transitionToStage2() {
+            if (foundCount < 3) return;
+            document.getElementById('stage-1').classList.add('hidden');
+            document.getElementById('stage-2').classList.remove('hidden');
+            document.getElementById('stage-indicator').innerText = '2단계: 역사 퀴즈';
+            playSfx('correct');
+        }
+
+        // STAGE 2: Quiz Logic
+        function checkAnswer(selectedOption) {
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.classList.remove('hidden', 'bg-red-900/80', 'text-red-200', 'bg-emerald-900/80', 'text-emerald-200');
+
+            if (selectedOption === 2) { // Correct Answer: 거묵골
+                playSfx('correct');
+                feedbackEl.classList.add('bg-emerald-900/80', 'text-emerald-200');
+                feedbackEl.innerText = "정답입니다! '거묵골'은 먹처럼 검고 아늑하다 하여 붙여진 독정3리의 옛 이름입니다.";
+
+                setTimeout(() => {
+                    transitionToStage3();
+                }, 1400);
+            } else {
+                playSfx('wrong');
+                feedbackEl.classList.add('bg-red-900/80', 'text-red-200');
+                feedbackEl.innerText = "아쉽습니다! 다시 한 번 생각해보세요. (힌트: 먹처럼 검은 골짜기)";
+            }
+        }
+
+        // Transition to Stage 3 (Success & Stamp)
+        function transitionToStage3() {
+            document.getElementById('stage-2').classList.add('hidden');
+            document.getElementById('stage-3').classList.remove('hidden');
+            document.getElementById('stage-indicator').innerText = '3단계: 탐험 완수';
+
+            setTimeout(() => {
+                const stamp = document.getElementById('stamp-element');
+                stamp.classList.remove('opacity-0');
+                stamp.classList.add('animate-stamp');
+                playSfx('stamp');
+            }, 400);
+        }
+
+        // Reset Game
+        function resetGame() {
+            foundSpirits = [false, false, false];
+            foundCount = 0;
+
+            document.getElementById('spirit-count').innerText = '0 / 3';
+            document.getElementById('unlocked-count').innerText = '0';
+
+            const quizBtn = document.getElementById('go-quiz-btn');
+            quizBtn.disabled = true;
+            quizBtn.className = 'px-4 py-1.5 bg-stone-700 text-stone-400 font-bold text-xs rounded-lg cursor-not-allowed transition-all';
+            quizBtn.innerHTML = `3개 정보 수집 후 퀴즈 도전 <i class="fa-solid fa-lock ml-1"></i>`;
+
+            for (let i = 1; i <= 3; i++) {
+                const targetEl = document.getElementById(`spirit-target-${i}`);
+                targetEl.querySelector('.unfound-graphic').classList.remove('hidden');
+                targetEl.querySelector('.found-graphic').classList.add('hidden');
+
+                const cardEl = document.getElementById(`info-card-${i}`);
+                cardEl.className = 'bg-stone-900 border border-stone-800 p-2.5 rounded-lg opacity-50 transition-all';
+                cardEl.innerHTML = `
+                    <div class="font-bold text-amber-400 mb-1 flex items-center gap-1">
+                        <span>🔒 ${i}. ${i===1?'감드러지의 유래':i===2?'거묵골의 유래':'독정3리 마을'}</span>
+                    </div>
+                    <p class="text-stone-400 text-[11px] leading-tight">정령 ${i}번을 찾으면 해금됩니다.</p>
+                `;
+            }
+
+            const stamp = document.getElementById('stamp-element');
+            stamp.classList.add('opacity-0');
+            stamp.classList.remove('animate-stamp');
+
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            document.getElementById('stage-3').classList.add('hidden');
+            document.getElementById('stage-2').classList.add('hidden');
+            document.getElementById('stage-1').classList.remove('hidden');
+            document.getElementById('stage-indicator').innerText = '1단계: 감드러지 정령 찾기';
+        }
+    </script>
+</body>
+</html>

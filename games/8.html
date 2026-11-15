@@ -1,0 +1,485 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>화수리 정령 물꽃이 인형 뽑기 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Jua', 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            min-height: 100vh;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .neon-glow {
+            text-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8, 0 0 30px #0284c7;
+        }
+
+        .cabinet-box {
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.08) 100%);
+        }
+
+        .arcade-btn {
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 0 #0369a1, 0 8px 12px rgba(0,0,0,0.5);
+        }
+
+        .arcade-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0369a1, 0 3px 6px rgba(0,0,0,0.5);
+        }
+
+        .arcade-btn-green {
+            box-shadow: 0 6px 0 #15803d, 0 8px 12px rgba(0,0,0,0.5);
+        }
+
+        .arcade-btn-green:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #15803d, 0 3px 6px rgba(0,0,0,0.5);
+        }
+
+        .claw-arm-left {
+            transform-origin: top right;
+            transition: transform 0.3s ease;
+        }
+
+        .claw-arm-right {
+            transform-origin: top left;
+            transition: transform 0.3s ease;
+        }
+
+        .claw-grabbing .claw-arm-left {
+            transform: rotate(28deg);
+        }
+
+        .claw-grabbing .claw-arm-right {
+            transform: rotate(-28deg);
+        }
+
+        @keyframes pulseTarget {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px #38bdf8); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 16px #f43f5e); }
+        }
+
+        .target-glow {
+            animation: pulseTarget 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-3 md:p-6 text-white min-h-screen">
+
+    <div class="w-full max-w-md bg-slate-900 rounded-3xl p-4 md:p-5 border-4 border-sky-400 cabinet-box shadow-2xl relative overflow-hidden flex flex-col gap-3">
+        
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-2xl md:text-3xl font-black text-sky-300 tracking-wider neon-glow">
+                💧 화수리 인형 뽑기 🌸
+            </h1>
+            <p class="text-xs text-sky-200 mt-1">집게를 움직여 <span class="text-yellow-300 font-bold">'물꽃이 정령'</span>을 뽑아보세요!</p>
+        </div>
+
+        <!-- Arcade Glass Box Window -->
+        <div class="relative w-full h-[360px] bg-gradient-to-b from-indigo-950 via-slate-900 to-indigo-950 rounded-2xl border-4 border-sky-500/60 overflow-hidden shadow-inner flex flex-col justify-between">
+            
+            <div class="absolute inset-0 glass-panel pointer-events-none z-20 border-b border-white/10"></div>
+
+            <!-- Top Rail Track & Claw -->
+            <div class="relative w-full h-10 bg-slate-800 border-b border-slate-700 z-10">
+                <div class="w-full h-1.5 bg-slate-600 my-4 mx-auto rounded-full border border-slate-500"></div>
+
+                <div id="clawCarriage" class="absolute top-0 left-[50%] -translate-x-1/2 flex flex-col items-center z-10" style="left: 50%;">
+                    <div class="w-9 h-4 bg-yellow-500 rounded-b-md shadow border border-yellow-300"></div>
+                    <div id="clawCable" class="w-1 bg-slate-300 shadow" style="height: 25px;"></div>
+                    <div id="clawHead" class="relative -mt-1 flex flex-col items-center">
+                        <div class="w-7 h-5 bg-sky-600 rounded-t-full border border-sky-300 shadow"></div>
+                        <div id="clawArms" class="relative w-10 h-7 flex justify-between px-0.5">
+                            <div class="claw-arm-left w-2.5 h-7 border-l-4 border-b-4 border-slate-200 rounded-bl-full"></div>
+                            <div class="claw-arm-right w-2.5 h-7 border-r-4 border-b-4 border-slate-200 rounded-br-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Play Area -->
+            <div id="playArea" class="relative flex-1 w-full overflow-hidden">
+
+                <!-- Left Chute Box -->
+                <div class="absolute bottom-0 left-0 w-20 h-16 bg-slate-950 rounded-tr-xl border-t-2 border-r-2 border-sky-500/70 z-10 flex items-center justify-center">
+                    <span class="text-[10px] text-sky-300 font-bold text-center leading-tight">
+                        배출구<br><i class="fa-solid fa-arrow-down text-sky-400"></i>
+                    </span>
+                </div>
+
+                <!-- Dolls Inside Cabinet -->
+                <div id="dollsContainer" class="absolute inset-0">
+                    <!-- TARGET DOLL: Custom SVG Water & Flower Spirit (Pos: ~65%) -->
+                    <div id="doll-target" class="doll-item absolute bottom-2 left-[65%] -translate-x-1/2 flex flex-col items-center z-10 cursor-pointer" data-name="물꽃이" data-target="true" data-x="65">
+                        <div class="bg-yellow-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full shadow mb-1 border border-yellow-200 animate-bounce">
+                            🎯 물꽃이
+                        </div>
+                        
+                        <!-- Cute SVG Water Drop Spirit with Flower -->
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-b from-sky-200 to-sky-400 rounded-full border-2 border-sky-100 p-1 shadow-lg flex items-center justify-center relative target-glow">
+                            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow">
+                                <!-- Water Droplet Body -->
+                                <path d="M50 12 C68 38, 82 52, 82 68 A32 32 0 0 1 18 68 C18 52, 32 38, 50 12 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
+                                <!-- Inner Gloss -->
+                                <path d="M38 35 C42 25, 48 20, 50 18" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+                                <!-- Eyes -->
+                                <ellipse cx="38" cy="60" rx="4" ry="6" fill="#0f172a"/>
+                                <ellipse cx="62" cy="60" rx="4" ry="6" fill="#0f172a"/>
+                                <circle cx="40" cy="58" r="1.5" fill="#ffffff"/>
+                                <circle cx="64" cy="58" r="1.5" fill="#ffffff"/>
+                                <!-- Blushing Cheeks -->
+                                <ellipse cx="32" cy="66" rx="5" ry="3" fill="#fb7185" opacity="0.7"/>
+                                <ellipse cx="68" cy="66" rx="5" ry="3" fill="#fb7185" opacity="0.7"/>
+                                <!-- Cute Smile -->
+                                <path d="M44 68 Q50 74 56 68" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+                                <!-- Cherry Blossom Flower on Head -->
+                                <g transform="translate(50, 16) scale(0.7)">
+                                    <circle cx="0" cy="-10" r="7" fill="#fda4af"/>
+                                    <circle cx="9.5" cy="-3.1" r="7" fill="#fda4af"/>
+                                    <circle cx="5.8" cy="8.1" r="7" fill="#fda4af"/>
+                                    <circle cx="-5.8" cy="8.1" r="7" fill="#fda4af"/>
+                                    <circle cx="-9.5" cy="-3.1" r="7" fill="#fda4af"/>
+                                    <circle cx="0" cy="0" r="5" fill="#fef08a"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Dummy Doll 1: Pink Teddy Bear (Pos: ~25%) -->
+                    <div id="doll-1" class="doll-item absolute bottom-2 left-[25%] -translate-x-1/2 flex flex-col items-center z-0" data-name="분홍 곰인형" data-target="false" data-x="25">
+                        <div class="w-14 h-14 bg-pink-300 rounded-2xl flex items-center justify-center border-2 border-pink-100 shadow text-2xl">🧸</div>
+                        <span class="text-[9px] text-pink-200 mt-0.5">곰인형</span>
+                    </div>
+
+                    <!-- Dummy Doll 2: Cute Rabbit (Pos: ~42%) -->
+                    <div id="doll-2" class="doll-item absolute bottom-2 left-[42%] -translate-x-1/2 flex flex-col items-center z-0" data-name="토끼 인형" data-target="false" data-x="42">
+                        <div class="w-14 h-14 bg-purple-300 rounded-2xl flex items-center justify-center border-2 border-purple-100 shadow text-2xl">🐰</div>
+                        <span class="text-[9px] text-purple-200 mt-0.5">토끼</span>
+                    </div>
+
+                    <!-- Dummy Doll 3: Cat Doll (Pos: ~82%) -->
+                    <div id="doll-3" class="doll-item absolute bottom-2 left-[82%] -translate-x-1/2 flex flex-col items-center z-0" data-name="고양이 인형" data-target="false" data-x="82">
+                        <div class="w-14 h-14 bg-amber-300 rounded-2xl flex items-center justify-center border-2 border-amber-100 shadow text-2xl">🐱</div>
+                        <span class="text-[9px] text-amber-200 mt-0.5">고양이</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Floor -->
+            <div class="w-full h-3 bg-slate-800 border-t border-slate-700"></div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 shadow-xl flex items-center justify-between gap-2">
+            <div class="flex gap-2">
+                <button id="btnLeft" onmousedown="startMoveLeft()" onmouseleave="stopMove()" onmouseup="stopMove()" ontouchstart="startMoveLeft(event)" ontouchend="stopMove(event)" 
+                        class="arcade-btn w-14 h-14 bg-sky-600 rounded-xl flex items-center justify-center text-xl font-bold text-white active:bg-sky-700 disabled:opacity-40">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <button id="btnRight" onmousedown="startMoveRight()" onmouseleave="stopMove()" onmouseup="stopMove()" ontouchstart="startMoveRight(event)" ontouchend="stopMove(event)" 
+                        class="arcade-btn w-14 h-14 bg-sky-600 rounded-xl flex items-center justify-center text-xl font-bold text-white active:bg-sky-700 disabled:opacity-40">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <button id="btnDrop" onclick="dropClaw()" 
+                    class="arcade-btn arcade-btn-green flex-1 h-14 bg-emerald-600 rounded-xl flex items-center justify-center gap-2 text-lg font-extrabold text-white active:bg-emerald-700 disabled:opacity-40">
+                <i class="fa-solid fa-hand-back-fist text-yellow-300"></i> 집기 (DROP)
+            </button>
+        </div>
+
+        <!-- Notification Bar -->
+        <div id="statusMessage" class="text-center text-xs text-yellow-300 font-bold bg-slate-950/60 py-2 px-3 rounded-xl border border-slate-800 min-h-[34px] flex items-center justify-center">
+            [◀ 왼쪽] [오른쪽 ▶] 버튼으로 이동 후 물꽃이를 뽑으세요!
+        </div>
+    </div>
+
+    <!-- STAGE 2: QUIZ MODAL -->
+    <div id="quizModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border-4 border-yellow-400 w-full max-w-sm rounded-3xl p-5 text-center shadow-2xl relative">
+            
+            <div class="w-14 h-14 bg-yellow-400 text-slate-900 rounded-full flex items-center justify-center text-2xl font-black mx-auto -mt-10 shadow-lg border-2 border-slate-900">
+                ❓
+            </div>
+
+            <h2 class="text-xl font-black text-yellow-300 mt-2">🎉 물꽃이 뽑기 성공!</h2>
+            <p class="text-xs text-slate-300 mb-3">아래 퀴즈의 정답을 맞혀주세요.</p>
+
+            <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700 mb-3 text-left">
+                <p class="text-sm font-bold text-white mb-2 leading-snug">
+                    Q. 화수리의 '화'와 '수'가 뜻하는 것은?
+                </p>
+                <div class="inline-block bg-sky-950/80 border border-sky-500/50 text-sky-300 px-2.5 py-1 rounded-lg text-xs font-bold">
+                    💡 힌트: <span class="text-yellow-300">ㄲ과 ㅁ</span>
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <input type="text" id="quizAnswer" placeholder="정답을 입력하세요" 
+                       class="w-full px-3 py-2.5 bg-slate-950 border-2 border-slate-600 rounded-xl text-center text-base text-white font-bold focus:outline-none focus:border-yellow-400"
+                       onkeypress="if(event.key==='Enter') checkAnswer()">
+                
+                <p id="errorMsg" class="text-rose-400 text-xs font-bold hidden">❌ 정답이 아닙니다. (힌트: ㄲ과 ㅁ)</p>
+
+                <button onclick="checkAnswer()" 
+                        class="w-full py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 text-lg font-black rounded-xl shadow transition active:scale-95">
+                    제출하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STAGE 3: FINAL HISTORICAL MEMORIAL CARD MODAL -->
+    <div id="successModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 border-4 border-amber-400 w-full max-w-md rounded-3xl p-5 md:p-6 text-center shadow-2xl relative overflow-hidden">
+            
+            <div class="inline-block bg-amber-400/20 text-amber-300 border border-amber-400/40 px-3 py-1 rounded-full text-xs font-bold mb-2">
+                👏 미션 클리어!
+            </div>
+
+            <h2 class="text-2xl font-extrabold text-amber-300 mb-3">
+                🌸 화수리 (花水里)
+            </h2>
+
+            <!-- Caught Doll Display -->
+            <div class="my-3 flex justify-center">
+                <div class="relative bg-gradient-to-b from-sky-200 to-sky-400 p-3 rounded-2xl border-2 border-amber-300 shadow-xl w-32 h-32 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow">
+                        <path d="M50 12 C68 38, 82 52, 82 68 A32 32 0 0 1 18 68 C18 52, 32 38, 50 12 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
+                        <path d="M38 35 C42 25, 48 20, 50 18" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+                        <ellipse cx="38" cy="60" rx="4" ry="6" fill="#0f172a"/>
+                        <ellipse cx="62" cy="60" rx="4" ry="6" fill="#0f172a"/>
+                        <circle cx="40" cy="58" r="1.5" fill="#ffffff"/>
+                        <circle cx="64" cy="58" r="1.5" fill="#ffffff"/>
+                        <ellipse cx="32" cy="66" rx="5" ry="3" fill="#fb7185" opacity="0.7"/>
+                        <ellipse cx="68" cy="66" rx="5" ry="3" fill="#fb7185" opacity="0.7"/>
+                        <path d="M44 68 Q50 74 56 68" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+                        <g transform="translate(50, 16) scale(0.7)">
+                            <circle cx="0" cy="-10" r="7" fill="#fda4af"/>
+                            <circle cx="9.5" cy="-3.1" r="7" fill="#fda4af"/>
+                            <circle cx="5.8" cy="8.1" r="7" fill="#fda4af"/>
+                            <circle cx="-5.8" cy="8.1" r="7" fill="#fda4af"/>
+                            <circle cx="-9.5" cy="-3.1" r="7" fill="#fda4af"/>
+                            <circle cx="0" cy="0" r="5" fill="#fef08a"/>
+                        </g>
+                    </svg>
+                    <span class="absolute -bottom-2 bg-sky-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow">화수리 정령 물꽃이</span>
+                </div>
+            </div>
+
+            <!-- Historical Statement Card -->
+            <div class="bg-slate-950/80 p-4 rounded-xl border border-amber-500/30 text-slate-200 text-xs md:text-sm font-medium leading-relaxed my-3 text-justify shadow-inner">
+                "평화로운 농촌의 풍경뒤로, 1919년 격렬했던 3.1 독립 만세 운동과 참변의 아픔을 이겨낸 항쟁의 터전이다."
+            </div>
+
+            <button onclick="restartGame()" class="w-full mt-2 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-600 transition">
+                🔄 다시 도전하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let clawPosPercent = 50;
+        let moveInterval = null;
+        let isDropping = false;
+
+        const clawCarriage = document.getElementById('clawCarriage');
+        const clawCable = document.getElementById('clawCable');
+        const clawHead = document.getElementById('clawHead');
+        const statusMessage = document.getElementById('statusMessage');
+
+        function startMoveLeft(e) {
+            if (e) e.preventDefault();
+            if (isDropping) return;
+            clearInterval(moveInterval);
+            moveInterval = setInterval(() => {
+                if (clawPosPercent > 12) {
+                    clawPosPercent -= 1.2;
+                    updateClawPos();
+                }
+            }, 25);
+        }
+
+        function startMoveRight(e) {
+            if (e) e.preventDefault();
+            if (isDropping) return;
+            clearInterval(moveInterval);
+            moveInterval = setInterval(() => {
+                if (clawPosPercent < 88) {
+                    clawPosPercent += 1.2;
+                    updateClawPos();
+                }
+            }, 25);
+        }
+
+        function stopMove(e) {
+            if (e) e.preventDefault();
+            clearInterval(moveInterval);
+        }
+
+        function updateClawPos() {
+            clawCarriage.style.left = `${clawPosPercent}%`;
+        }
+
+        function dropClaw() {
+            if (isDropping) return;
+            isDropping = true;
+            disableControls(true);
+            statusMessage.textContent = "집게를 내리는 중...";
+
+            const playAreaHeight = document.getElementById('playArea').clientHeight;
+            const dropDistance = playAreaHeight - 75;
+
+            clawCable.style.transition = 'height 1.2s cubic-bezier(0.25, 1, 0.5, 1)';
+            clawCable.style.height = `${dropDistance}px`;
+
+            setTimeout(() => {
+                clawHead.classList.add('claw-grabbing');
+
+                const dolls = Array.from(document.querySelectorAll('.doll-item'));
+                let grabbedDoll = null;
+
+                for (let doll of dolls) {
+                    const dollX = parseFloat(doll.getAttribute('data-x'));
+                    if (Math.abs(clawPosPercent - dollX) <= 8) {
+                        grabbedDoll = doll;
+                        break;
+                    }
+                }
+
+                setTimeout(() => {
+                    if (grabbedDoll) {
+                        grabbedDoll.style.transition = 'transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)';
+                        grabbedDoll.style.transform = `translate(-50%, -${dropDistance - 20}px)`;
+                    }
+
+                    clawCable.style.height = '25px';
+
+                    setTimeout(() => {
+                        statusMessage.textContent = "배출구로 이동 중...";
+                        clawCarriage.style.transition = 'left 1.2s ease-in-out';
+                        clawPosPercent = 10;
+                        updateClawPos();
+
+                        if (grabbedDoll) {
+                            grabbedDoll.style.transition = 'left 1.2s ease-in-out';
+                            grabbedDoll.style.left = '10%';
+                        }
+
+                        setTimeout(() => {
+                            clawHead.classList.remove('claw-grabbing');
+
+                            if (grabbedDoll) {
+                                grabbedDoll.style.transition = 'all 0.4s ease-in';
+                                grabbedDoll.style.transform = 'translate(-50%, 20px) scale(0.2)';
+                                grabbedDoll.style.opacity = '0';
+
+                                const isTarget = grabbedDoll.getAttribute('data-target') === 'true';
+                                const dollName = grabbedDoll.getAttribute('data-name');
+
+                                setTimeout(() => {
+                                    if (isTarget) {
+                                        document.getElementById('quizModal').classList.remove('hidden');
+                                        document.getElementById('quizAnswer').value = '';
+                                        document.getElementById('errorMsg').classList.add('hidden');
+                                    } else {
+                                        statusMessage.textContent = `❌ 실패! '${dollName}'을(를) 잡았습니다. '물꽃이'를 잡아야 합니다!`;
+                                        resetGameField();
+                                    }
+                                }, 500);
+                            } else {
+                                statusMessage.textContent = "❌ 허공을 집었습니다! 위치를 다시 조절하세요.";
+                                resetGameField();
+                            }
+                        }, 1300);
+
+                    }, 1300);
+
+                }, 400);
+
+            }, 1200);
+        }
+
+        function resetGameField() {
+            setTimeout(() => {
+                const dolls = document.querySelectorAll('.doll-item');
+                dolls.forEach(doll => {
+                    doll.style.transition = 'none';
+                    doll.style.left = `${doll.getAttribute('data-x')}%`;
+                    doll.style.transform = 'translate(-50%, 0) scale(1)';
+                    doll.style.opacity = '1';
+                });
+
+                clawCarriage.style.transition = 'left 1s ease';
+                clawPosPercent = 50;
+                updateClawPos();
+
+                setTimeout(() => {
+                    clawCarriage.style.transition = 'none';
+                    isDropping = false;
+                    disableControls(false);
+                }, 1000);
+            }, 1500);
+        }
+
+        function disableControls(disabled) {
+            document.getElementById('btnLeft').disabled = disabled;
+            document.getElementById('btnRight').disabled = disabled;
+            document.getElementById('btnDrop').disabled = disabled;
+        }
+
+        function checkAnswer() {
+            const answer = document.getElementById('quizAnswer').value.replace(/\s+/g, '');
+            if (answer === '꽃과물') {
+                document.getElementById('quizModal').classList.add('hidden');
+                document.getElementById('successModal').classList.remove('hidden');
+            } else {
+                document.getElementById('errorMsg').classList.remove('hidden');
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('successModal').classList.add('hidden');
+            statusMessage.textContent = "[◀ 왼쪽] [오른쪽 ▶] 버튼으로 이동 후 물꽃이를 뽑으세요!";
+            resetGameField();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (isDropping) return;
+            if (e.key === 'ArrowLeft') {
+                if (clawPosPercent > 12) {
+                    clawPosPercent -= 2;
+                    updateClawPos();
+                }
+            } else if (e.key === 'ArrowRight') {
+                if (clawPosPercent < 88) {
+                    clawPosPercent += 2;
+                    updateClawPos();
+                }
+            } else if (e.key === ' ' || e.key === 'Enter') {
+                if (!document.getElementById('quizModal').classList.contains('hidden')) {
+                    checkAnswer();
+                } else if (document.getElementById('successModal').classList.contains('hidden')) {
+                    dropClaw();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+```

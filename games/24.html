@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>장안8리 정령 온이의 따뜻한 샘물 모으기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'sky-warm': '#70C1FF',
+                        'warm-bg': '#FFFBF0',
+                        'warm-wood': '#8C5A3C',
+                        'seal-red': '#E11D48'
+                    },
+                    fontFamily: {
+                        gaegu: ['Gaegu', 'cursive', 'sans-serif'],
+                        jua: ['Jua', 'sans-serif'],
+                        noto: ['Noto Sans KR', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background: linear-gradient(180deg, #60A5FA 0%, #93C5FD 40%, #E0F2FE 80%, #FEF3C7 100%);
+        }
+        
+        .font-gaegu { font-family: 'Gaegu', cursive; }
+        .font-jua { font-family: 'Jua', sans-serif; }
+
+        /* Floating Cloud & Steam Animations */
+        @keyframes cloudFloat {
+            0% { transform: translateX(-8%); }
+            50% { transform: translateX(8%); }
+            100% { transform: translateX(-8%); }
+        }
+        .animate-cloud { animation: cloudFloat 10s ease-in-out infinite; }
+
+        @keyframes steamUp {
+            0% { transform: translateY(0) scale(0.6); opacity: 0.9; }
+            50% { transform: translateY(-40px) scale(1.3); opacity: 0.5; }
+            100% { transform: translateY(-80px) scale(2); opacity: 0; }
+        }
+        .steam-bubble {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: steamUp 3s infinite ease-out;
+        }
+
+        /* Stamp animation */
+        @keyframes stampEffect {
+            0% { transform: scale(3.5) rotate(-15deg); opacity: 0; }
+            60% { transform: scale(0.85) rotate(-15deg); opacity: 1; }
+            80% { transform: scale(1.05) rotate(-15deg); }
+            100% { transform: scale(1) rotate(-15deg); opacity: 1; }
+        }
+        .stamp-animation {
+            animation: stampEffect 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Float animation for Oni */
+        @keyframes floatAnim {
+            0%, 100% { transform: translateY(0px) rotate(-1deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .animate-float { animation: floatAnim 2.2s ease-in-out infinite; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 overflow-x-hidden">
+
+    <!-- Sky Background Clouds & Steam Effects -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <!-- Sun Glow -->
+        <div class="absolute top-4 left-6 w-28 h-28 bg-amber-200/50 rounded-full blur-2xl"></div>
+        <!-- Clouds -->
+        <div class="absolute top-6 left-[-5%] w-72 opacity-90 animate-cloud">
+            <svg viewBox="0 0 100 40" fill="#FFFFFF"><path d="M 10 30 Q 15 10 35 15 Q 50 5 70 15 Q 85 10 90 30 Z"/></svg>
+        </div>
+        <div class="absolute top-16 right-[-5%] w-80 opacity-80 animate-cloud" style="animation-delay: -5s;">
+            <svg viewBox="0 0 100 40" fill="#FFFFFF"><path d="M 10 30 Q 20 8 40 12 Q 60 2 80 15 Q 95 12 90 30 Z"/></svg>
+        </div>
+        <!-- Steam Particles Container -->
+        <div id="steamContainer" class="absolute inset-0"></div>
+    </div>
+
+    <!-- Main Game Mobile Layout -->
+    <div class="relative z-10 w-full max-w-md flex flex-col items-center">
+
+        <!-- Title Banner -->
+        <header class="w-full text-center mb-2">
+            <div class="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 border-4 border-amber-300 rounded-2xl p-2.5 shadow-xl text-white relative">
+                <span class="bg-amber-200 text-amber-950 font-bold text-[11px] px-3 py-0.5 rounded-full shadow">역사마을 지명 이야기</span>
+                <h1 class="text-2xl sm:text-3xl font-jua text-amber-100 tracking-wide mt-1 flex items-center justify-center gap-2 drop-shadow">
+                    <span class="text-amber-300">♨</span> 장안8리 정령 '온이'
+                </h1>
+                <p class="text-xs text-amber-200 mt-0.5 font-medium">따뜻한 샘물을 모아 마을을 지켜주세요!</p>
+            </div>
+        </header>
+
+        <!-- Main Game Card -->
+        <div class="w-full bg-amber-50/95 backdrop-blur-md border-4 border-amber-600 rounded-3xl p-3 shadow-2xl flex flex-col items-center">
+            
+            <!-- Information Bar -->
+            <div class="w-full flex justify-between items-center mb-2 bg-amber-100/90 p-2 rounded-2xl border-2 border-amber-300">
+                <button id="infoBtn" class="bg-amber-800 hover:bg-amber-900 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1">
+                    <i class="fa-solid fa-book-open text-amber-300"></i> 마을 이야기
+                </button>
+                <div class="text-xs font-black text-amber-900 bg-white/80 px-3 py-1 rounded-xl border border-amber-200">
+                    <i class="fa-solid fa-droplet text-sky-500"></i> 모은 샘물: <span id="scoreText" class="text-sky-600 font-extrabold text-sm">0</span>개
+                </div>
+            </div>
+
+            <!-- Easy Progress Gauge Bar -->
+            <div class="w-full mb-2">
+                <div class="flex justify-between items-center text-xs font-black text-amber-900 mb-1">
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-fire-flame-curved text-orange-500"></i> 온수 게이지</span>
+                    <span id="gaugePercentText" class="text-orange-600 text-sm">0%</span>
+                </div>
+                <div class="w-full h-7 bg-slate-200 rounded-full border-3 border-amber-800 p-0.5 shadow-inner relative overflow-hidden">
+                    <div id="gaugeBar" class="h-full bg-gradient-to-r from-sky-400 via-orange-400 to-red-500 rounded-full transition-all duration-300 w-0 flex items-center justify-end pr-2 text-xs text-white font-black drop-shadow">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Viewport Canvas (Clean Cloud & Sky Only) -->
+            <div id="gameViewport" class="relative w-full h-[390px] bg-gradient-to-b from-sky-400 via-sky-200 to-sky-100 rounded-2xl overflow-hidden border-3 border-amber-400 shadow-inner cursor-pointer touch-none">
+                
+                <!-- Sky Background Cloud Soft Highlights (No houses/trees) -->
+                <div class="absolute inset-0 pointer-events-none">
+                    <!-- Top Cloud Platform for Oni -->
+                    <div class="absolute top-1 left-1/2 -translate-x-1/2 w-64 h-20 opacity-80">
+                        <svg viewBox="0 0 100 40" fill="#FFFFFF"><path d="M 5 35 Q 20 15 40 20 Q 50 10 70 20 Q 85 15 95 35 Z"/></svg>
+                    </div>
+                    <!-- Soft Fluffy Cloud Layer at Bottom -->
+                    <div class="absolute bottom-0 inset-x-0 h-16 bg-white/40 backdrop-blur-xs rounded-b-2xl border-t border-white/60"></div>
+                </div>
+
+                <!-- Oni Spirit Character (Top Center Floating) -->
+                <div id="oniChar" class="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-24 pointer-events-none z-20 transition-transform duration-100">
+                    <!-- Oni Graphic -->
+                    <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md animate-float">
+                        <path d="M 20 60 Q 10 50 25 40 Q 30 20 50 25 Q 70 20 75 40 Q 90 50 80 65 Q 85 80 65 85 Q 50 90 35 85 Q 15 80 20 60 Z" fill="#FFFFFF" opacity="0.95" />
+                        <path d="M 25 62 Q 18 52 30 43 Q 35 25 52 30 Q 68 25 72 43 Q 84 52 75 66 Q 80 78 62 82 Q 50 86 38 82 Q 22 78 25 62 Z" fill="#E0F2FE" />
+                        <circle cx="30" cy="30" r="10" fill="#FDBA74" />
+                        <circle cx="70" cy="30" r="10" fill="#FDBA74" />
+                        <path d="M 20 35 C 30 15, 70 15, 80 35 C 75 42, 25 42, 20 35 Z" fill="#16A34A" />
+                        <circle cx="50" cy="22" r="6" fill="#FFFFFF" />
+                        <circle cx="50" cy="22" r="3" fill="#FACC15" />
+                        <circle cx="38" cy="50" r="4.5" fill="#1E293B" />
+                        <circle cx="62" cy="50" r="4.5" fill="#1E293B" />
+                        <circle cx="40" cy="48" r="1.5" fill="#FFFFFF" />
+                        <circle cx="64" cy="48" r="1.5" fill="#FFFFFF" />
+                        <ellipse cx="32" cy="56" rx="5" ry="3" fill="#F43F5E" opacity="0.7" />
+                        <ellipse cx="68" cy="56" rx="5" ry="3" fill="#F43F5E" opacity="0.7" />
+                        <path d="M 43 58 Q 50 65 57 58" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" />
+                        <path d="M 65 65 Q 80 65 78 78 Q 63 78 65 65 Z" fill="#78350F" />
+                        <ellipse cx="71.5" cy="67" rx="6.5" ry="2" fill="#38BDF8" />
+                    </svg>
+                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-black bg-amber-800 text-amber-100 px-2 py-0.5 rounded-full shadow border border-amber-300 whitespace-nowrap">
+                        수호정령 온이
+                    </div>
+                </div>
+
+                <!-- Extra Large Water Bucket (Very Easy to Catch) -->
+                <div id="bucket" class="absolute bottom-3 left-1/2 -translate-x-1/2 w-28 h-16 z-20 touch-none">
+                    <svg viewBox="0 0 120 70" class="w-full h-full drop-shadow-lg">
+                        <ellipse cx="60" cy="20" rx="52" ry="12" fill="#38BDF8" />
+                        <path d="M 8 20 L 20 62 C 22 66, 98 66, 100 62 L 112 20 C 112 20, 60 28, 8 20 Z" fill="#8C5A3C" stroke="#451A03" stroke-width="3" />
+                        <path d="M 12 32 Q 60 42 108 32" fill="none" stroke="#F59E0B" stroke-width="3" />
+                        <ellipse cx="60" cy="20" rx="52" ry="10" fill="none" stroke="#451A03" stroke-width="4" />
+                        <path d="M 6 20 C 6 -8, 114 -8, 114 20" fill="none" stroke="#78350F" stroke-width="5" stroke-linecap="round" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-amber-950 pointer-events-none mt-2">
+                        바가지
+                    </div>
+                </div>
+
+                <!-- Start Game Overlay -->
+                <div id="startOverlay" class="absolute inset-0 bg-amber-950/60 backdrop-blur-xs z-30 flex flex-col items-center justify-center p-4 text-center">
+                    <div class="bg-amber-50/95 p-5 rounded-3xl border-4 border-amber-600 max-w-xs shadow-2xl flex flex-col items-center">
+                        <div class="w-20 h-20 mb-1">
+                            <svg viewBox="0 0 100 100" class="w-full h-full animate-bounce">
+                                <circle cx="50" cy="50" r="42" fill="#38BDF8" />
+                                <path d="M 28 65 Q 50 82 72 65" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" />
+                                <circle cx="35" cy="42" r="6" fill="#FFFFFF" />
+                                <circle cx="65" cy="42" r="6" fill="#FFFFFF" />
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-black text-amber-900 font-jua mb-1">온이의 샘물 모으기</h2>
+                        <p class="text-xs text-amber-800 mb-4 font-medium leading-relaxed">
+                            구름 위에서 떨어진 무작위 샘물을 <b>바가지</b>로 받아주세요!<br>
+                            5~6개만 받으면 온수 게이지가 채워집니다.
+                        </p>
+                        <button id="startGameBtn" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-black text-base py-3 px-6 rounded-2xl shadow-lg active:scale-95 transition">
+                            게임 시작하기 <i class="fa-solid fa-play ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Big Touch Controls for Mobile -->
+            <div class="w-full grid grid-cols-2 gap-3 mt-3">
+                <button id="leftBtn" class="bg-amber-200 hover:bg-amber-300 active:bg-amber-400 text-amber-950 font-black py-3 rounded-2xl border-2 border-amber-500 text-base shadow flex items-center justify-center gap-2 select-none active:scale-95 transition">
+                    <i class="fa-solid fa-arrow-left text-lg"></i> ◀ 좌
+                </button>
+                <button id="rightBtn" class="bg-amber-200 hover:bg-amber-300 active:bg-amber-400 text-amber-950 font-black py-3 rounded-2xl border-2 border-amber-500 text-base shadow flex items-center justify-center gap-2 select-none active:scale-95 transition">
+                    우 ▶ <i class="fa-solid fa-arrow-right text-lg"></i>
+                </button>
+            </div>
+            <p class="text-[11px] text-amber-800 font-bold mt-2 text-center">
+                👉 화면을 직접 손가락으로 드래그해서 움직일 수 있어요!
+            </p>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-amber-800 max-w-sm w-full p-5 rounded-3xl relative shadow-2xl text-amber-950">
+            <button id="closeInfoBtn" class="absolute top-3 right-3 bg-amber-800 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center">
+                &times;
+            </button>
+            <div class="text-center mb-3">
+                <span class="bg-amber-200 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">역사마을 지명 유래</span>
+                <h2 class="text-2xl font-black text-amber-900 font-jua mt-1">장안8리 이야기</h2>
+            </div>
+            <div class="space-y-3 text-xs leading-relaxed border-t border-b border-amber-300 py-3 my-2">
+                <div class="bg-white/90 p-3 rounded-xl border border-amber-200">
+                    <p class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-map-pin text-orange-600"></i> 온수골 이야기:</p>
+                    <p class="text-slate-700">
+                        <b>장안8리</b>는 '온수골'이라는 옛 지명을 가지고 있습니다. 추운 겨울에도 물이 잘 얼지 않고 따스함이 유지되는 온수골에서 유래하였습니다.
+                    </p>
+                </div>
+                <div class="bg-white/90 p-3 rounded-xl border border-amber-200">
+                    <p class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-heart text-rose-500"></i> 수호정령 온이:</p>
+                    <p class="text-slate-700">
+                        온수골의 따스한 샘물을 품은 아기 수호정령으로, 주민들의 마음을 따뜻하게 녹여주는 다정한 마스코트입니다.
+                    </p>
+                </div>
+            </div>
+            <button id="confirmInfoBtn" class="w-full bg-amber-800 text-white font-bold py-2.5 rounded-xl shadow">
+                확인했습니다!
+            </button>
+        </div>
+    </div>
+
+    <!-- Quiz Modal (100% Gauge Reached) -->
+    <div id="quizModal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-amber-800 max-w-sm w-full p-5 rounded-3xl relative shadow-2xl text-amber-950">
+            <div class="text-center mb-3">
+                <span class="bg-orange-500 text-white text-xs font-black px-3 py-1 rounded-full animate-bounce">🎉 게이지 100% 달성!</span>
+                <h2 class="text-2xl font-black text-amber-900 font-jua mt-2">장안8리 역사 퀴즈</h2>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border-2 border-amber-300 shadow-sm mb-3">
+                <p class="font-extrabold text-sm text-slate-800 mb-3 leading-snug">
+                    <span class="text-orange-600 font-black">Q.</span> 장안8리의 옛 지명으로, 추운 겨울에도 물이 잘 얼지 않고 따스함이 유지되는 마을 이름은 무엇일까요?
+                </p>
+                <div class="space-y-2" id="quizOptions">
+                    <button class="quiz-option-btn w-full text-left p-3 rounded-xl border-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 font-bold text-sm text-slate-800 transition flex items-center justify-between" data-correct="true">
+                        <span>1) 온수골</span>
+                        <i class="fa-regular fa-circle text-amber-400"></i>
+                    </button>
+                    <button class="quiz-option-btn w-full text-left p-3 rounded-lg border-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 font-bold text-sm text-slate-700 transition flex items-center justify-between" data-correct="false">
+                        <span>2) 얼음골</span>
+                        <i class="fa-regular fa-circle text-amber-400"></i>
+                    </button>
+                    <button class="quiz-option-btn w-full text-left p-3 rounded-lg border-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 font-bold text-sm text-slate-700 transition flex items-center justify-between" data-correct="false">
+                        <span>3) 바람골</span>
+                        <i class="fa-regular fa-circle text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <p id="quizErrorText" class="text-xs text-red-600 font-bold text-center hidden mb-2">
+                <i class="fa-solid fa-circle-exclamation"></i> 오답입니다! 다시 선택해보세요.
+            </p>
+        </div>
+    </div>
+
+    <!-- Success Result Screen Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-amber-800 max-w-sm w-full p-5 rounded-3xl relative shadow-2xl text-center flex flex-col items-center">
+            
+            <div class="text-orange-600 text-3xl font-black font-jua mb-1">
+                🎉 미션 완료! 🎉
+            </div>
+            
+            <div class="bg-white/95 p-4 rounded-2xl border-2 border-amber-300 w-full mb-3 shadow-inner relative overflow-hidden">
+                <p id="successMessage" class="text-sm font-extrabold text-amber-950 leading-relaxed my-1">
+                    "이제 마을주민 모두다 추운겨울에도 따뜻한 물을 쓸수 있게 되었어요"
+                </p>
+                
+                <!-- Red Stamp Graphic -->
+                <div class="my-3 relative h-24 flex items-center justify-center">
+                    <div id="stampElement" class="w-24 h-24 border-4 border-seal-red rounded-full flex flex-col items-center justify-center text-seal-red font-black border-dashed transform -rotate-12 shadow-lg bg-red-50/60 p-2 stamp-animation">
+                        <div class="border-2 border-seal-red rounded-full w-full h-full flex flex-col items-center justify-center">
+                            <span class="text-[9px] tracking-widest">장안8리</span>
+                            <span class="text-2xl font-jua font-black">성공!</span>
+                            <span class="text-[8px]">수호정령 온이</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-2xl font-black text-amber-900 font-jua tracking-wide mt-1">
+                    성공하셨습니다
+                </div>
+            </div>
+
+            <button id="restartBtn" class="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 text-white font-black text-base py-3 px-6 rounded-2xl shadow-lg active:scale-95 transition">
+                다시 하기 <i class="fa-solid fa-rotate-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Game Logic -->
+    <script>
+        // Game State Variables
+        let isGameRunning = false;
+        let score = 0;
+        let gaugeProgress = 0;
+        const MAX_GAUGE = 100;
+        const WATER_VALUE = 20; // 5 drops = 100% full
+
+        // Positioning
+        let viewportWidth = 0;
+        let viewportHeight = 0;
+        let bucketX = 0;
+        let oniX = 0;
+        let oniDirection = 1;
+        let oniSpeed = 1.8;
+
+        // Water Drops State
+        let waterDrops = [];
+        let lastDropTime = 0;
+        const dropInterval = 1100;
+
+        // Touch & Key state
+        const keyState = { left: false, right: false };
+
+        // DOM Elements
+        const gameViewport = document.getElementById('gameViewport');
+        const bucket = document.getElementById('bucket');
+        const oniChar = document.getElementById('oniChar');
+        const scoreText = document.getElementById('scoreText');
+        const gaugeBar = document.getElementById('gaugeBar');
+        const gaugePercentText = document.getElementById('gaugePercentText');
+
+        const startOverlay = document.getElementById('startOverlay');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+
+        const infoBtn = document.getElementById('infoBtn');
+        const infoModal = document.getElementById('infoModal');
+        const closeInfoBtn = document.getElementById('closeInfoBtn');
+        const confirmInfoBtn = document.getElementById('confirmInfoBtn');
+
+        const quizModal = document.getElementById('quizModal');
+        const quizErrorText = document.getElementById('quizErrorText');
+
+        const successModal = document.getElementById('successModal');
+        const restartBtn = document.getElementById('restartBtn');
+
+        function updateDimensions() {
+            viewportWidth = gameViewport.clientWidth;
+            viewportHeight = gameViewport.clientHeight;
+            bucketX = viewportWidth / 2;
+            oniX = viewportWidth / 2;
+            updateBucketPosition();
+            updateOniPosition();
+        }
+
+        window.addEventListener('resize', updateDimensions);
+        updateDimensions();
+
+        // Background Steam Effect
+        function createBackgroundSteam() {
+            const container = document.getElementById('steamContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const steam = document.createElement('div');
+                steam.className = 'steam-bubble';
+                const size = Math.random() * 40 + 30;
+                steam.style.width = `${size}px`;
+                steam.style.height = `${size}px`;
+                steam.style.left = `${Math.random() * 90 + 5}%`;
+                steam.style.bottom = `${Math.random() * 20}%`;
+                steam.style.animationDelay = `${Math.random() * 3}s`;
+                container.appendChild(steam);
+            }
+        }
+        createBackgroundSteam();
+
+        // Controls
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') keyState.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd') keyState.right = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') keyState.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd') keyState.right = false;
+        });
+
+        const bindButtonControls = (btn, key) => {
+            const start = (e) => { e.preventDefault(); keyState[key] = true; };
+            const end = (e) => { e.preventDefault(); keyState[key] = false; };
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+            btn.addEventListener('touchstart', start);
+            btn.addEventListener('touchend', end);
+        };
+        bindButtonControls(leftBtn, 'left');
+        bindButtonControls(rightBtn, 'right');
+
+        // Touch & Drag Handling
+        const handlePointerMove = (e) => {
+            if (!isGameRunning) return;
+            const rect = gameViewport.getBoundingClientRect();
+            let clientX = e.clientX;
+            if (e.touches && e.touches.length > 0) clientX = e.touches[0].clientX;
+            if (clientX !== undefined) {
+                const relativeX = clientX - rect.left;
+                bucketX = Math.max(45, Math.min(viewportWidth - 45, relativeX));
+                updateBucketPosition();
+            }
+        };
+
+        gameViewport.addEventListener('mousedown', (e) => handlePointerMove(e));
+        window.addEventListener('mousemove', (e) => handlePointerMove(e));
+        gameViewport.addEventListener('touchstart', (e) => handlePointerMove(e), { passive: true });
+        gameViewport.addEventListener('touchmove', (e) => handlePointerMove(e), { passive: true });
+
+        function updateBucketPosition() {
+            bucket.style.left = `${bucketX}px`;
+        }
+
+        function updateOniPosition() {
+            oniChar.style.left = `${oniX}px`;
+        }
+
+        function startGame() {
+            score = 0;
+            gaugeProgress = 0;
+            waterDrops.forEach(d => d.element.remove());
+            waterDrops = [];
+            
+            scoreText.textContent = score;
+            updateGaugeUI();
+
+            startOverlay.classList.add('hidden');
+            isGameRunning = true;
+            lastDropTime = performance.now();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Spawn Water Drop at RANDOM X positions
+        function spawnWaterDrop() {
+            const margin = 45;
+            // RANDOM position across the entire viewport width
+            const randomX = Math.random() * (viewportWidth - margin * 2) + margin;
+
+            // Move Oni towards spawn location for visual fun
+            oniX = randomX;
+            updateOniPosition();
+
+            const dropElem = document.createElement('div');
+            dropElem.className = 'absolute z-10 pointer-events-none transform -translate-x-1/2';
+            dropElem.innerHTML = `
+                <div class="relative flex items-center justify-center animate-pulse">
+                    <svg viewBox="0 0 40 50" class="w-8 h-10 drop-shadow-md">
+                        <path d="M 20 0 C 20 0, 40 28, 40 36 C 40 44, 30 50, 20 50 C 10 50, 0 44, 0 36 C 0 28, 20 0, 20 0 Z" fill="#38BDF8" />
+                        <ellipse cx="12" cy="30" rx="4" ry="8" fill="#FFFFFF" opacity="0.75" transform="rotate(-20 12 30)" />
+                    </svg>
+                    <span class="absolute top-0 text-xs font-black text-orange-500">♨</span>
+                </div>
+            `;
+
+            // Comfortable falling speed (2.2 ~ 2.8)
+            const dropSpeed = Math.random() * 0.6 + 2.2;
+
+            const dropObj = {
+                x: randomX,
+                y: 65,
+                speed: dropSpeed,
+                element: dropElem
+            };
+
+            gameViewport.appendChild(dropElem);
+            waterDrops.push(dropObj);
+        }
+
+        function createCatchEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'absolute z-20 pointer-events-none text-xs font-black text-orange-600 animate-bounce';
+            effect.style.left = `${x - 20}px`;
+            effect.style.top = `${y - 25}px`;
+            effect.innerHTML = `♨ 따뜻해요!`;
+            gameViewport.appendChild(effect);
+            setTimeout(() => effect.remove(), 550);
+        }
+
+        function updateGaugeUI() {
+            gaugeBar.style.width = `${gaugeProgress}%`;
+            gaugePercentText.textContent = `${gaugeProgress}%`;
+            gaugeBar.textContent = gaugeProgress > 10 ? `${gaugeProgress}%` : '';
+        }
+
+        // Game Loop
+        function gameLoop(timestamp) {
+            if (!isGameRunning) return;
+
+            const moveSpeed = 9;
+            if (keyState.left) {
+                bucketX = Math.max(45, bucketX - moveSpeed);
+                updateBucketPosition();
+            }
+            if (keyState.right) {
+                bucketX = Math.min(viewportWidth - 45, bucketX + moveSpeed);
+                updateBucketPosition();
+            }
+
+            if (timestamp - lastDropTime > dropInterval) {
+                spawnWaterDrop();
+                lastDropTime = timestamp;
+            }
+
+            const bucketTop = viewportHeight - 55;
+            const bucketWidth = 85;
+
+            for (let i = waterDrops.length - 1; i >= 0; i--) {
+                const drop = waterDrops[i];
+                drop.y += drop.speed;
+                drop.element.style.top = `${drop.y}px`;
+                drop.element.style.left = `${drop.x}px`;
+
+                // Hit Detection
+                if (drop.y >= bucketTop - 15 && drop.y <= bucketTop + 25) {
+                    if (Math.abs(drop.x - bucketX) < bucketWidth / 2 + 15) {
+                        score++;
+                        scoreText.textContent = score;
+                        gaugeProgress = Math.min(MAX_GAUGE, gaugeProgress + WATER_VALUE);
+                        updateGaugeUI();
+
+                        createCatchEffect(drop.x, drop.y);
+
+                        drop.element.remove();
+                        waterDrops.splice(i, 1);
+
+                        if (gaugeProgress >= MAX_GAUGE) {
+                            triggerQuizModal();
+                            return;
+                        }
+                        continue;
+                    }
+                }
+
+                if (drop.y > viewportHeight + 30) {
+                    drop.element.remove();
+                    waterDrops.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function triggerQuizModal() {
+            isGameRunning = false;
+            quizErrorText.classList.add('hidden');
+            quizModal.classList.remove('hidden');
+        }
+
+        // Quiz Handling
+        const quizOptionBtns = document.querySelectorAll('.quiz-option-btn');
+        quizOptionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const isCorrect = btn.getAttribute('data-correct') === 'true';
+                if (isCorrect) {
+                    quizModal.classList.add('hidden');
+                    showSuccessModal();
+                } else {
+                    quizErrorText.classList.remove('hidden');
+                    btn.classList.add('border-red-400', 'bg-red-50');
+                    setTimeout(() => {
+                        btn.classList.remove('border-red-400', 'bg-red-50');
+                    }, 1000);
+                }
+            });
+        });
+
+        function showSuccessModal() {
+            successModal.classList.remove('hidden');
+        }
+
+        startGameBtn.addEventListener('click', startGame);
+
+        restartBtn.addEventListener('click', () => {
+            successModal.classList.add('hidden');
+            startGame();
+        });
+
+        infoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
+        closeInfoBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+        confirmInfoBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+
+        updateDimensions();
+    </script>
+</body>
+</html>

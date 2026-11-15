@@ -1,0 +1,823 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>원안리 수호정령 '안이' 메모리 게임</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts: Gowun Batang & Outfit -->
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    body {
+      font-family: 'Gowun Batang', serif;
+      background: linear-gradient(135deg, #0d2818 0%, #05140b 50%, #11321e 100%);
+      min-height: 100vh;
+      color: #f8fafc;
+      user-select: none;
+    }
+
+    .font-outfit {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Card 3D Flip Styles */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem;
+      overflow: hidden;
+    }
+
+    /* Card Front (Unflipped) */
+    .card-front {
+      background: radial-gradient(circle at center, #1b432c, #091a10);
+      border: 2px solid rgba(234, 179, 8, 0.6);
+      box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(234, 179, 8, 0.25);
+    }
+
+    .card-front:hover {
+      border-color: rgba(250, 204, 21, 0.9);
+      box-shadow: 0 0 18px rgba(250, 204, 21, 0.5);
+    }
+
+    /* Card Back (Revealed Items) */
+    .card-back {
+      background: linear-gradient(135deg, #143823, #081d11);
+      border: 2px solid #86efac;
+      transform: rotateY(180deg);
+      box-shadow: 0 8px 20px -4px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Matched Cards Glow Effect */
+    .card.matched .card-back {
+      border-color: #facc15;
+      background: linear-gradient(135deg, #166534, #052e16);
+      animation: pulseMatch 1.8s infinite alternate;
+    }
+
+    @keyframes pulseMatch {
+      0% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.4); }
+      100% { box-shadow: 0 0 22px rgba(250, 204, 21, 0.9); }
+    }
+
+    /* Wrong Pair Shake Animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) rotateY(180deg); }
+      20% { transform: translateX(-6px) rotateY(180deg); }
+      40% { transform: translateX(6px) rotateY(180deg); }
+      60% { transform: translateX(-4px) rotateY(180deg); }
+      80% { transform: translateX(4px) rotateY(180deg); }
+    }
+
+    .card.wrong .card-inner {
+      animation: shake 0.45s ease-in-out;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .hanok-pattern {
+      background-image: radial-gradient(#facc15 1px, transparent 1px), radial-gradient(#facc15 1px, #143823 1px);
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
+      opacity: 0.15;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #22c55e;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between p-2 sm:p-4 min-h-screen">
+
+  <!-- Header Section -->
+  <header class="text-center my-1 max-w-xl w-full">
+    <div class="flex items-center justify-between mb-1.5">
+      <div class="flex items-center space-x-2">
+        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold">원안리 정령</span>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-200 via-amber-200 to-green-200">
+          원안리 '안이' 메모리 게임
+        </h1>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button id="book-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-emerald-300 transition-all border border-emerald-500/30 shadow-md flex items-center space-x-1" title="안이 이야기">
+          <i class="fas fa-scroll text-sm"></i>
+          <span class="text-xs font-bold hidden sm:inline">원안리 이야기</span>
+        </button>
+        <button id="sound-btn" class="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-emerald-300 transition-all border border-emerald-500/30 shadow-md" title="소리 토글">
+          <i id="sound-icon" class="fas fa-volume-up text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Score Board Section -->
+  <section class="w-full max-w-xl bg-slate-900/85 backdrop-blur-md rounded-2xl p-2.5 my-1 border border-emerald-500/30 shadow-2xl flex items-center justify-between text-xs md:text-sm font-outfit">
+    <!-- Timer -->
+    <div class="flex items-center space-x-2">
+      <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <i class="fas fa-clock text-xs"></i>
+      </div>
+      <div>
+        <div class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">시간</div>
+        <div id="timer" class="font-bold font-mono text-slate-100 text-xs md:text-sm">00:00</div>
+      </div>
+    </div>
+
+    <!-- Moves -->
+    <div class="flex items-center space-x-2">
+      <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <i class="fas fa-hand-pointer text-xs"></i>
+      </div>
+      <div>
+        <div class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">시도 횟수</div>
+        <div id="moves" class="font-bold font-mono text-slate-100 text-xs md:text-sm">0</div>
+      </div>
+    </div>
+
+    <!-- Stars -->
+    <div class="flex items-center space-x-2">
+      <div class="p-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+        <i class="fas fa-star text-xs"></i>
+      </div>
+      <div>
+        <div class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">등급</div>
+        <div id="stars-container" class="flex text-amber-400 text-xs space-x-0.5">
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Button -->
+    <button id="reset-btn" title="다시 시작" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold transition-all shadow-md active:scale-95 flex items-center space-x-1">
+      <i class="fas fa-rotate-right text-xs"></i>
+      <span class="hidden sm:inline text-xs">재시작</span>
+    </button>
+  </section>
+
+  <!-- Game Canvas Grid -->
+  <main class="w-full max-w-xl my-auto">
+    <div id="game-grid" class="grid grid-cols-4 gap-2 sm:gap-2.5 p-1">
+      <!-- Cards rendered via JS -->
+    </div>
+  </main>
+
+  <!-- Footer Tag Section -->
+  <footer class="mt-2 text-center text-slate-400 text-xs max-w-xl w-full">
+    <div class="p-2 rounded-xl bg-slate-900/60 border border-emerald-500/20 text-[11px] text-emerald-200/90">
+      🍃 원안리 수호 요정 <b>'안이'</b>와 함께 7짝을 맞추고 마을의 안녕을 기원해 보세요!
+    </div>
+  </footer>
+
+  <!-- Story Modal -->
+  <div id="book-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 z-40 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-5 md:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl relative text-slate-200">
+      <button id="close-book-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+      <div class="flex items-center space-x-2 mb-3 border-b border-emerald-500/30 pb-2.5">
+        <i class="fas fa-leaf text-emerald-400 text-xl"></i>
+        <h2 class="text-lg font-bold text-emerald-200">원안리 수호 정령 이야기</h2>
+      </div>
+      <div class="space-y-3 text-xs leading-relaxed text-slate-300">
+        <div class="p-3 bg-emerald-950/60 rounded-xl border border-emerald-500/30">
+          <p class="font-bold text-emerald-300 text-sm mb-1">🏡 원안리 지명 유래</p>
+          <p>원안리는 마을이 지닌 지형적 특성과 안녕을 기원하는 의미에서 비롯된 이름으로, 예부터 <b>'으뜸(元)'</b>이 되며 <b>'편안하고 평화로운(安) 마을'</b>이라는 뜻을 품고 있습니다.</p>
+        </div>
+        <div class="p-3 bg-amber-950/60 rounded-xl border border-amber-500/30">
+          <p class="font-bold text-amber-300 text-sm mb-1">✨ 정령 안이의 특징</p>
+          <p>언제나 빙긋 웃는 얼굴로 마을의 평화와 안녕을 묵묵히 챙겨주는, 듬직하고 다정한 마을의 수호 요정입니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory & Quiz Modal -->
+  <div id="victory-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border-2 border-emerald-500/60 rounded-3xl p-5 md:p-7 max-w-md w-full text-center shadow-2xl transform scale-90 transition-transform duration-300 relative overflow-hidden" id="modal-content">
+      
+      <!-- Background Glow Effects -->
+      <div class="absolute -top-20 -left-20 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl"></div>
+
+      <!-- Crown Header Icon -->
+      <div class="w-14 h-14 bg-gradient-to-tr from-emerald-400 via-green-500 to-amber-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg shadow-emerald-500/30 border-2 border-emerald-200">
+        <i class="fas fa-seedling text-xl text-white"></i>
+      </div>
+
+      <h2 class="text-xl font-bold text-emerald-200 mb-1">축하합니다! 7짝 성공!</h2>
+      <p id="victory-subtitle" class="text-slate-300 text-xs mb-3">원안리 정령 안이가 미소를 보냅니다.</p>
+
+      <!-- Quiz Container (Step 1) -->
+      <div id="quiz-container" class="my-3 p-3.5 bg-slate-950/80 rounded-2xl border border-emerald-500/40 text-left">
+        <p class="text-xs font-bold text-amber-300 mb-2 flex items-center">
+          <i class="fas fa-question-circle mr-1.5 text-emerald-400"></i> 원안리의 '안'은 어떤 뜻일까요?
+        </p>
+        <div class="space-y-2 font-outfit">
+          <button class="quiz-option w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 hover:border-emerald-400 text-xs text-left transition-all flex items-center justify-between font-medium" data-choice="1">
+            <span>1번. 평안하다</span>
+            <i class="fas fa-chevron-right text-slate-500 text-[10px]"></i>
+          </button>
+          <button class="quiz-option w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 hover:border-emerald-400 text-xs text-left transition-all flex items-center justify-between font-medium" data-choice="2">
+            <span>2번. 빠르다</span>
+            <i class="fas fa-chevron-right text-slate-500 text-[10px]"></i>
+          </button>
+          <button class="quiz-option w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 hover:border-emerald-400 text-xs text-left transition-all flex items-center justify-between font-medium" data-choice="3">
+            <span>3번. 높다</span>
+            <i class="fas fa-chevron-right text-slate-500 text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Result & Final Message Container (Step 2 - Hidden initially) -->
+      <div id="quiz-result-container" class="hidden my-3 p-3.5 bg-slate-950/90 rounded-2xl border border-amber-500/40 text-center">
+        <div id="quiz-feedback" class="text-sm font-bold mb-2"></div>
+        <div class="w-20 h-20 mx-auto my-2 rounded-xl bg-slate-900 border border-emerald-400 p-1 flex items-center justify-center">
+          <img src="7_원안리정령_안이_희귀.png" alt="안이" class="w-full h-full object-contain rounded drop-shadow" onerror="this.onerror=null; this.parentElement.innerHTML=\`<svg viewBox='0 0 100 100' class='w-full h-full drop-shadow'><circle cx='50' cy='55' r='28' fill='#fef08a'/><path d='M 22 42 Q 50 15 78 42 Q 50 32 22 42 Z' fill='#15803d'/><circle cx='35' cy='32' r='4' fill='#ffffff'/><circle cx='65' cy='32' r='4' fill='#ffffff'/><path d='M 40 52 Q 44 46 48 52' fill='none' stroke='#451a03' stroke-width='2.5'/><path d='M 52 52 Q 56 46 60 52' fill='none' stroke='#451a03' stroke-width='2.5'/><path d='M 46 58 Q 50 63 54 58' fill='none' stroke='#dc2626' stroke-width='2'/></svg>\`;" />
+        </div>
+        <p class="text-xs leading-relaxed text-amber-100/90 font-serif italic mt-2 p-2.5 bg-emerald-950/60 rounded-xl border border-emerald-500/30">
+          "거친 샘물의 폭발을 지혜로운 바위돌로 다스리며 모두가 편안하기를 바랐던 염원의 터전이다."
+        </p>
+      </div>
+
+      <!-- Stats Summary -->
+      <div class="bg-slate-800/80 rounded-2xl p-2.5 mb-3 grid grid-cols-2 gap-2 border border-slate-700 font-outfit">
+        <div class="text-center">
+          <span class="text-[9px] uppercase text-slate-400 block font-bold">소요 시간</span>
+          <span id="modal-time" class="text-base font-bold font-mono text-emerald-300">00:00</span>
+        </div>
+        <div class="text-center">
+          <span class="text-[9px] uppercase text-slate-400 block font-bold">시도 횟수</span>
+          <span id="modal-moves" class="text-base font-bold font-mono text-amber-300">0</span>
+        </div>
+      </div>
+
+      <!-- Play Again Button -->
+      <button id="play-again-btn" class="w-full py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm">
+        다시 놀기
+      </button>
+    </div>
+  </div>
+
+  <!-- Confetti Canvas Overlay -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <script>
+    /* Sound Synthesizer Class (Web Audio API) */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+      }
+
+      playFlip() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(340, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(680, this.ctx.currentTime + 0.08);
+
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      playMatch() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'triangle';
+        osc2.type = 'sine';
+
+        osc1.frequency.setValueAtTime(523.25, now);
+        osc1.frequency.setValueAtTime(659.25, now + 0.1);
+
+        osc2.frequency.setValueAtTime(659.25, now);
+        osc2.frequency.setValueAtTime(783.99, now + 0.1);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.35);
+        osc2.stop(now + 0.35);
+      }
+
+      playMismatch() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.linearRampToValueAtTime(130, now + 0.2);
+
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(now + 0.2);
+      }
+
+      playVictory() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const now = this.ctx.currentTime + (i * 0.08);
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.45);
+        });
+      }
+    }
+
+    /* 7 West-Coast Specialty Cards (Themed around Wonan-ri coastal tradition) */
+    const aniCardsData = [
+      {
+        id: 'dried_octopus',
+        name: '말린 낙지',
+        region: '서해 명품 특산',
+        bg: 'bg-rose-950/80',
+        borderColor: 'border-rose-400',
+        textColor: 'text-rose-300',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><ellipse cx="50" cy="35" rx="18" ry="22" fill="#9f1239"/><circle cx="43" cy="30" r="2.5" fill="#ffffff"/><circle cx="57" cy="30" r="2.5" fill="#ffffff"/><path d="M 36 50 Q 25 70 20 85 M 42 52 Q 35 72 32 88 M 48 54 Q 48 75 50 90 M 54 54 Q 60 75 62 88 M 60 52 Q 70 72 75 85 M 65 50 Q 80 68 85 80" stroke="#881337" stroke-width="4" stroke-linecap="round" fill="none"/></svg>`
+      },
+      {
+        id: 'clams',
+        name: '바지락',
+        region: '청정 갯벌 보물',
+        bg: 'bg-amber-950/80',
+        borderColor: 'border-amber-400',
+        textColor: 'text-amber-300',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><path d="M 20 60 Q 20 25 50 25 Q 80 25 80 60 Q 50 78 20 60 Z" fill="#b45309" stroke="#78350f" stroke-width="2"/><path d="M 50 25 Q 35 45 30 65 M 50 25 L 50 71 M 50 25 Q 65 45 70 65" stroke="#fef08a" stroke-width="1.5" fill="none"/></svg>`
+      },
+      {
+        id: 'blue_crab',
+        name: '꽃게',
+        region: '속이 찬 풍미',
+        bg: 'bg-orange-950/80',
+        borderColor: 'border-orange-400',
+        textColor: 'text-orange-300',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><path d="M 25 50 Q 50 30 75 50 Q 80 65 50 70 Q 20 65 25 50 Z" fill="#ea580c"/><circle cx="42" cy="40" r="3" fill="#ffffff"/><circle cx="58" cy="40" r="3" fill="#ffffff"/><path d="M 20 45 Q 8 35 15 25 M 80 45 Q 92 35 85 25" stroke="#c2410c" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M 25 60 L 12 70 M 30 63 L 20 78 M 75 60 L 88 70 M 70 63 L 80 78" stroke="#c2410c" stroke-width="3" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'shrimp',
+        name: '새우',
+        region: '싱싱한 갯벌 명물',
+        bg: 'bg-red-950/80',
+        borderColor: 'border-red-400',
+        textColor: 'text-red-300',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><path d="M 70 30 Q 40 15 25 40 Q 15 60 30 80 Q 45 85 40 75 Q 28 60 38 45 Q 48 30 70 30 Z" fill="#ef4444"/><circle cx="62" cy="28" r="2.5" fill="#000000"/><path d="M 68 25 L 85 15 M 68 28 L 88 22" stroke="#fca5a5" stroke-width="1.5"/><path d="M 28 80 L 18 90 M 30 82 L 24 92" stroke="#dc2626" stroke-width="2.5"/></svg>`
+      },
+      {
+        id: 'sea_salt',
+        name: '천일염',
+        region: '햇살 품은 소금',
+        bg: 'bg-sky-950/80',
+        borderColor: 'border-sky-300',
+        textColor: 'text-sky-200',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><polygon points="50,20 80,35 80,65 50,80 20,65 20,35" fill="#e0f2fe" stroke="#38bdf8" stroke-width="2"/><polygon points="50,20 80,35 50,50 20,35" fill="#f0f9ff"/><polygon points="50,50 80,35 80,65 50,80" fill="#bae6fd"/><path d="M 30 25 L 40 15 M 65 22 L 72 12 M 75 70 L 85 78" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'mullet',
+        name: '숭어',
+        region: '쫄깃한 가을 맛',
+        bg: 'bg-blue-950/80',
+        borderColor: 'border-blue-400',
+        textColor: 'text-blue-300',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><ellipse cx="50" cy="50" rx="35" ry="16" fill="#3b82f6"/><polygon points="80,50 95,38 95,62" fill="#1d4ed8"/><circle cx="28" cy="46" r="3" fill="#ffffff"/><circle cx="28" cy="46" r="1.5" fill="#000000"/><path d="M 40 40 Q 55 45 70 40" stroke="#93c5fd" stroke-width="2" fill="none"/></svg>`
+      },
+      {
+        id: 'goby',
+        name: '망둥어',
+        region: '갯벌 명물 고기',
+        bg: 'bg-emerald-950/80',
+        borderColor: 'border-emerald-400',
+        textColor: 'text-emerald-300',
+        svgFallback: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow"><path d="M 18 45 C 30 30 70 35 82 50 C 70 65 30 70 18 55 Z" fill="#10b981"/><circle cx="28" cy="44" r="5" fill="#fef08a"/><circle cx="28" cy="44" r="2.5" fill="#0f172a"/><polygon points="80,50 94,40 94,60" fill="#047857"/><path d="M 40 58 Q 45 68 50 58" stroke="#059669" stroke-width="3" fill="none"/></svg>`
+      }
+    ];
+
+    const sound = new SoundEngine();
+
+    let cards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let moves = 0;
+    let stars = 3;
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let isBoardLocked = false;
+    let gameStarted = false;
+
+    // DOM Elements
+    const gameGrid = document.getElementById('game-grid');
+    const timerEl = document.getElementById('timer');
+    const movesEl = document.getElementById('moves');
+    const starsContainer = document.getElementById('stars-container');
+    const resetBtn = document.getElementById('reset-btn');
+    const soundBtn = document.getElementById('sound-btn');
+    const soundIcon = document.getElementById('sound-icon');
+    const bookBtn = document.getElementById('book-btn');
+    const bookModal = document.getElementById('book-modal');
+    const closeBookBtn = document.getElementById('close-book-btn');
+
+    // Victory & Quiz Elements
+    const victoryModal = document.getElementById('victory-modal');
+    const modalContent = document.getElementById('modal-content');
+    const quizContainer = document.getElementById('quiz-container');
+    const quizResultContainer = document.getElementById('quiz-result-container');
+    const quizFeedback = document.getElementById('quiz-feedback');
+    const modalTime = document.getElementById('modal-time');
+    const modalMoves = document.getElementById('modal-moves');
+    const playAgainBtn = document.getElementById('play-again-btn');
+
+    function initGame() {
+      matchedPairs = 0;
+      moves = 0;
+      stars = 3;
+      secondsElapsed = 0;
+      gameStarted = false;
+      isBoardLocked = false;
+      flippedCards = [];
+
+      clearInterval(timerInterval);
+      timerEl.textContent = '00:00';
+      movesEl.textContent = '0';
+      updateStarsUI();
+
+      victoryModal.classList.add('opacity-0', 'pointer-events-none');
+      modalContent.classList.add('scale-90');
+
+      // Reset Quiz View
+      quizContainer.classList.remove('hidden');
+      quizResultContainer.classList.add('hidden');
+
+      // Create 7 pairs (14 cards total)
+      const deck = [...aniCardsData, ...aniCardsData];
+      cards = shuffle(deck);
+
+      renderBoard();
+    }
+
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function getCardVisualHTML(item) {
+      if (item.image) {
+        return `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-contain rounded drop-shadow" onerror="this.onerror=null; this.parentElement.innerHTML=\`${item.svgFallback}\`;" />`;
+      }
+      return item.svgFallback;
+    }
+
+    function renderBoard() {
+      gameGrid.innerHTML = '';
+      gameGrid.className = 'grid grid-cols-4 gap-2 sm:gap-2.5 p-1';
+
+      cards.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card perspective-1000 aspect-[3/4] cursor-pointer';
+        cardEl.dataset.index = index;
+        cardEl.dataset.id = card.id;
+
+        cardEl.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">
+              <div class="hanok-pattern absolute inset-0"></div>
+              <div class="w-full h-full border border-yellow-500/30 rounded-lg flex flex-col items-center justify-center p-1.5 bg-slate-900/50 z-10">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-yellow-400/50 mb-1">
+                  <i class="fas fa-leaf text-yellow-300 text-base md:text-lg"></i>
+                </div>
+                <span class="text-[9px] md:text-[10px] text-emerald-200 font-bold">원안리 안이</span>
+              </div>
+            </div>
+            <div class="card-back ${card.bg}">
+              <div class="w-full h-full border ${card.borderColor} rounded-lg flex flex-col items-center justify-between p-1 md:p-1.5 bg-slate-900/80">
+                <div class="w-full text-center">
+                  <span class="text-[8px] md:text-[9px] text-slate-300 font-bold block truncate">${card.region}</span>
+                </div>
+                <div class="w-10 h-10 md:w-12 md:h-12 my-auto flex items-center justify-center overflow-hidden">
+                  ${getCardVisualHTML(card)}
+                </div>
+                <div class="w-full text-center">
+                  <span class="text-[11px] md:text-xs font-bold ${card.textColor} block truncate">${card.name}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        cardEl.addEventListener('click', () => handleCardClick(cardEl));
+        gameGrid.appendChild(cardEl);
+      });
+    }
+
+    function handleCardClick(cardEl) {
+      if (isBoardLocked) return;
+      if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+
+      if (!gameStarted) {
+        startTimer();
+        gameStarted = true;
+      }
+
+      sound.playFlip();
+      cardEl.classList.add('flipped');
+      flippedCards.push(cardEl);
+
+      if (flippedCards.length === 2) {
+        checkMatch();
+      }
+    }
+
+    function checkMatch() {
+      isBoardLocked = true;
+      moves++;
+      movesEl.textContent = moves;
+      updateStarsLogic();
+
+      const [card1, card2] = flippedCards;
+      const isMatch = card1.dataset.id === card2.dataset.id;
+
+      if (isMatch) {
+        sound.playMatch();
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        matchedPairs++;
+        flippedCards = [];
+        isBoardLocked = false;
+
+        if (matchedPairs === 7) {
+          handleVictory();
+        }
+      } else {
+        sound.playMismatch();
+        card1.classList.add('wrong');
+        card2.classList.add('wrong');
+
+        setTimeout(() => {
+          card1.classList.remove('flipped', 'wrong');
+          card2.classList.remove('flipped', 'wrong');
+          flippedCards = [];
+          isBoardLocked = false;
+        }, 800);
+      }
+    }
+
+    function updateStarsLogic() {
+      if (moves <= 11) {
+        stars = 3;
+      } else if (moves <= 16) {
+        stars = 2;
+      } else {
+        stars = 1;
+      }
+      updateStarsUI();
+    }
+
+    function updateStarsUI() {
+      const starIcons = Array.from({ length: 3 }, (_, i) => {
+        return `<i class="${i < stars ? 'fas text-amber-400' : 'far text-slate-600'} fa-star"></i>`;
+      }).join('');
+      starsContainer.innerHTML = starIcons;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        secondsElapsed++;
+        timerEl.textContent = formatTime(secondsElapsed);
+      }, 1000);
+    }
+
+    function formatTime(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function handleVictory() {
+      clearInterval(timerInterval);
+      sound.playVictory();
+
+      modalTime.textContent = formatTime(secondsElapsed);
+      modalMoves.textContent = moves;
+
+      setTimeout(() => {
+        victoryModal.classList.remove('opacity-0', 'pointer-events-none');
+        modalContent.classList.remove('scale-90');
+        triggerConfetti();
+      }, 450);
+    }
+
+    // Quiz Choice Handler
+    document.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const choice = e.currentTarget.dataset.choice;
+        
+        quizContainer.classList.add('hidden');
+        quizResultContainer.classList.remove('hidden');
+
+        if (choice === '1') {
+          sound.playMatch();
+          quizFeedback.className = 'text-sm font-bold text-emerald-400 mb-1';
+          quizFeedback.innerHTML = '✨ 정답입니다! (1번. 평안하다)';
+        } else {
+          sound.playMismatch();
+          quizFeedback.className = 'text-sm font-bold text-rose-400 mb-1';
+          quizFeedback.innerHTML = '아쉽습니다! 정답은 1번 "평안하다" 입니다.';
+        }
+      });
+    });
+
+    // Event Listeners
+    bookBtn.addEventListener('click', () => {
+      bookModal.classList.remove('opacity-0', 'pointer-events-none');
+    });
+
+    closeBookBtn.addEventListener('click', () => {
+      bookModal.classList.add('opacity-0', 'pointer-events-none');
+    });
+
+    soundBtn.addEventListener('click', () => {
+      sound.enabled = !sound.enabled;
+      if (sound.enabled) {
+        soundIcon.className = 'fas fa-volume-up text-sm';
+        soundBtn.classList.remove('opacity-50');
+      } else {
+        soundIcon.className = 'fas fa-volume-mute text-sm';
+        soundBtn.classList.add('opacity-50');
+      }
+    });
+
+    resetBtn.addEventListener('click', initGame);
+    playAgainBtn.addEventListener('click', initGame);
+
+    // Confetti Canvas System
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiParticles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Confetti {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = -20;
+        this.size = Math.random() * 8 + 4;
+        this.speedY = Math.random() * 3 + 2;
+        this.speedX = (Math.random() - 0.5) * 2;
+        this.color = `hsl(${Math.random() * 80 + 90}, 85%, 60%)`;
+        this.rotation = Math.random() * 360;
+        this.rotationSpeed = (Math.random() - 0.5) * 10;
+      }
+
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.rotation += this.rotationSpeed;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    function triggerConfetti() {
+      confettiParticles = Array.from({ length: 80 }, () => new Confetti());
+      animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      confettiParticles.forEach((particle, index) => {
+        particle.update();
+        particle.draw();
+        if (particle.y > canvas.height) {
+          confettiParticles[index] = new Confetti();
+        }
+      });
+
+      if (confettiParticles.length > 0) {
+        requestAnimationFrame(animateConfetti);
+      }
+    }
+
+    window.onload = () => {
+      initGame();
+    };
+  </script>
+</body>
+</html>
+```

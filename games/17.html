@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#fff7ec" />
+<title>배미마을 버블팡 | Hi-Story</title>
+<style>
+:root{--ink:#33445e;--muted:#77869a;--pink:#f56f9a;--mint:#5ec4ac;--yellow:#fbc65e;--blue:#77a9f6;--cream:#fff9ef}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink)}body{background:radial-gradient(ellipse at top,#ffecf1 0,#fef8f1 52%,#e9f7ef 100%);min-height:100vh;padding:15px;display:flex;align-items:center;justify-content:center}
+.shell{width:min(100%,560px);border-radius:28px;background:#fffefb;box-shadow:0 18px 60px #6b77902a;border:1px solid #ffffffb8;padding:18px;overflow:hidden}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.03em;color:#9390a3}.brand .pill{background:#ffe4ee;color:#c45c7d;border-radius:99px;padding:5px 11px}.brand span:last-child{color:#759a90}
+h1{font-size:clamp(26px,6vw,36px);margin:10px 0 4px;text-align:center;letter-spacing:-.05em;line-height:1.15}h1 b{color:#ee7194} .subtitle{text-align:center;color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 15px}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:11px}.stat{background:#faf6f5;border:1px solid #f7eeee;padding:8px;border-radius:15px;text-align:center}.stat small{display:block;font-size:11px;color:#8e8796;font-weight:700}.stat strong{font-size:19px;font-weight:900;line-height:1.3;font-variant-numeric:tabular-nums}.stat strong span{font-size:12px;color:#9e9ba6}.stat:nth-child(2){background:#f0f8ff;border-color:#e5f2ff}.stat:nth-child(3){background:#f1f9ed;border-color:#e6f1e2}
+.progress{height:9px;background:#f0edf0;overflow:hidden;border-radius:30px;margin-bottom:12px}.progress div{width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffb66c,#f579a8);transition:width .22s}
+.stage{height:clamp(345px,55vh,480px);border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(#ccecff 0%,#e1f4f7 45%,#f8f3db 74%,#bbddbb 100%);isolation:isolate;touch-action:manipulation;border:2px solid #e9eef7}
+.scene{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}.cloud{position:absolute;z-index:1;color:white;font-size:35px;opacity:.8;filter:drop-shadow(0 3px 1px #acd2da7a);pointer-events:none;animation:sway 6s ease-in-out infinite alternate}.cloud.c1{left:9%;top:7%}.cloud.c2{right:8%;top:15%;animation-delay:-2s;font-size:28px}.cloud.c3{left:43%;top:24%;animation-delay:-3s;font-size:21px;opacity:.65}@keyframes sway{to{transform:translateX(18px)}}
+.skylabel{position:absolute;top:12px;left:12px;background:#ffffffd6;backdrop-filter:blur(5px);border:1px solid white;border-radius:30px;padding:6px 11px;font-size:12px;font-weight:800;color:#68969d;z-index:2;pointer-events:none}
+.bubble{position:absolute;bottom:-100px;left:var(--left);width:var(--size);height:var(--size);border-radius:50%;border:2px solid #fff9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;user-select:none;-webkit-user-select:none;cursor:pointer;z-index:3;color:#414c65;background:radial-gradient(circle at 32% 23%,#fff 0 8%,#ffffff8e 11%,transparent 33%),radial-gradient(circle at 65% 80%,#fff8,transparent 40%),var(--bubble-color);box-shadow:inset -9px -13px 20px #7385a61b,inset 7px 8px 17px #ffffffaa,0 5px 17px #647a982c;animation:fly var(--duration) linear forwards;will-change:transform}.bubble::after{content:"";position:absolute;width:20%;height:9%;top:16%;left:21%;border-radius:50%;background:#fff9;transform:rotate(-28deg)}.bubble .emoji{font-size:20px;line-height:1.2}.bubble .word{font-weight:900;font-size:clamp(14px,3.4vw,17px);white-space:nowrap;letter-spacing:-.04em}.bubble:focus-visible{outline:3px solid #ff668f;outline-offset:3px}
+@keyframes fly{0%{transform:translate3d(0,0,0) rotate(-7deg);opacity:0}5%{opacity:1}35%{transform:translate3d(var(--wiggle),-175px,0) rotate(5deg)}75%{opacity:1}100%{transform:translate3d(var(--drift),-610px,0) rotate(-6deg);opacity:0}}
+.burst{position:absolute;z-index:5;pointer-events:none;font-weight:1000;font-size:23px;animation:popout .65s ease-out forwards;text-shadow:0 2px 0 white;color:#f96a9f}@keyframes popout{to{transform:translateY(-40px) scale(1.45);opacity:0}}
+.feedback{position:absolute;left:50%;top:19%;transform:translateX(-50%);z-index:6;background:#ffffffec;color:#42665f;padding:9px 17px;border-radius:99px;box-shadow:0 5px 16px #536b8e1b;white-space:nowrap;font-weight:900;font-size:14px;opacity:0;pointer-events:none;transition:opacity .12s}.feedback.show{opacity:1}.feedback.wrong{color:#d7627b}
+.cover{position:absolute;z-index:8;inset:0;background:#fff9;backdrop-filter:blur(7px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center}[hidden]{display:none!important}.cover[hidden],.quiz[hidden]{display:none!important}.cover .cover-icon{font-size:75px;filter:drop-shadow(0 6px 4px #e4c3a1)}.cover h2{font-size:25px;letter-spacing:-.05em;margin:8px 0}.cover p{font-size:15px;line-height:1.75;margin:8px 0 16px}.cover em{color:#e77da0;font-weight:900;font-style:normal}.cover .tiny{font-size:12px;color:#8792a2;margin:14px 0 0}.primary{border:0;border-radius:99px;background:linear-gradient(110deg,#f986a2,#f9b773);color:white;font-weight:900;font-size:16px;cursor:pointer;padding:15px 30px;box-shadow:0 8px 18px #ea8a9e52;touch-action:manipulation;transition:transform .12s}.primary:active{transform:scale(.97)}.primary:focus-visible,.choice:focus-visible{outline:3px solid #5fa7e7;outline-offset:3px}
+.legend{display:flex;justify-content:center;gap:13px;flex-wrap:wrap;padding:13px 0 2px;font-size:12px;font-weight:800;color:#7a8799}.legend span{white-space:nowrap}.legend b{color:#e66f91}
+.quiz{padding:5px 0 0}.quiz-head{font-size:14px;color:#df7c97;font-weight:1000;text-align:center;margin:10px 0}.quiz h2{text-align:center;font-size:22px;line-height:1.4;margin:8px 0 18px;letter-spacing:-.055em}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.choice{border:2px solid #eee9ef;padding:16px 8px;background:white;border-radius:15px;font-size:17px;color:#49536a;font-weight:850;cursor:pointer;touch-action:manipulation}.choice:hover{background:#fff7f7}.choice.bad{background:#fff0f0;border-color:#f6b2c0;color:#d9647e}.choice.good{background:#e9f8ef;border-color:#9cddb7;color:#357961}.quiz-feedback{min-height:49px;font-weight:800;text-align:center;color:#ca617a;padding:13px 0;font-size:14px}.end{background:#f7fbf7;border:1px solid #d5ebd9;border-radius:20px;padding:17px;margin-top:4px;text-align:center}.end h3{font-size:22px;margin:7px 0}.end p{font-size:14px;line-height:1.8;color:#567064}.end button{margin:8px 0 2px}
+@media(max-width:410px){body{padding:8px}.shell{padding:13px;border-radius:20px}.stage{height:min(53vh,435px);min-height:345px}.bubble .word{font-size:14px}.cover h2{font-size:23px}.cover p{font-size:14px}.stat strong{font-size:17px}.legend{gap:7px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.cloud{animation:none}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="brand"><span class="pill">Hi-Story · 마을 탐험</span><span>화산1리 배미마을</span></header>
+  <h1>🫧 배미마을 <b>버블팡!</b></h1>
+  <p class="subtitle">둥실둥실 떠오르는 방울 속에 우리 마을 이름이 숨어 있어요.</p>
+  <section id="gameView" aria-label="지명 방울 터뜨리기 게임">
+    <div class="stats">
+      <div class="stat"><small>찾은 지명</small><strong id="score">0 <span>/ 12</span></strong></div>
+      <div class="stat"><small>남은 시간</small><strong id="time">45<span>초</span></strong></div>
+      <div class="stat"><small>최고 기록</small><strong id="best">0 <span>개</span></strong></div>
+    </div>
+    <div class="progress" aria-label="게임 진행도"><div id="progressFill"></div></div>
+    <div class="stage" id="stage">
+      <svg class="scene" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="411" cy="80" r="36" fill="#fff1b3" opacity=".87" />
+        <path d="M0 295Q95 138 181 281Q255 165 333 285Q435 170 500 274V500H0Z" fill="#9bc4b5" />
+        <path d="M0 346Q94 261 186 350Q320 235 500 329V500H0Z" fill="#6ca68e" />
+        <path d="M0 402Q90 352 201 396Q360 337 500 388V500H0Z" fill="#a5cb91" />
+        <path d="M0 444Q128 412 250 444Q380 411 500 439V500H0Z" fill="#83bb86" />
+        <path d="M0 481Q125 449 255 478Q385 446 500 474V500H0Z" fill="#67a980" />
+        <!-- little traditional house -->
+        <g transform="translate(72 333)"><path d="M0 38L55 0L111 38Z" fill="#c46e61"/><path d="M14 37V94H97V37" fill="#ffedd6" stroke="#dfc9aa" stroke-width="4"/><rect x="42" y="58" width="28" height="36" rx="3" fill="#a87c5b"/><path d="M0 37L55 -1L111 37" fill="none" stroke="#956152" stroke-width="7" stroke-linejoin="round" /></g>
+        <!-- pottery -->
+        <g transform="translate(368 360)"><path d="M8 0H70Q61 18 67 31Q79 64 60 89H18Q-1 61 10 30Q17 17 8 0Z" fill="#df9871" stroke="#c37c61" stroke-width="4"/><ellipse cx="39" cy="0" rx="31" ry="7" fill="#ae6753"/><path d="M10 42Q38 58 66 42" fill="none" stroke="#fbe8bf" stroke-width="5"/><path d="M16 61Q38 75 60 61" fill="none" stroke="#fbe8bf" stroke-width="5"/></g>
+        <g fill="#fce3f1"><circle cx="31" cy="463" r="7"/><circle cx="48" cy="449" r="5"/><circle cx="301" cy="469" r="7"/><circle cx="324" cy="457" r="6"/><circle cx="456" cy="464" r="7"/></g>
+      </svg>
+      <div class="cloud c1">☁</div><div class="cloud c2">☁</div><div class="cloud c3">☁</div>
+      <div class="skylabel">🌸 우리 마을의 옛 이름 찾기</div>
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <div class="cover" id="cover">
+        <div class="cover-icon">🫧🏺</div>
+        <h2>배미마을에 온 걸 환영해!</h2>
+        <p><strong>꽃뫼 · 사기말 · 배미</strong>가 적힌<br/>방울을 <em>12개</em> 터뜨려 보세요!<br/><em>‘말미’는 가짜 지명</em>이니 조심!</p>
+        <button type="button" class="primary" id="startBtn">버블팡 시작! ✨</button>
+        <p class="tiny">⏱ 제한 시간 45초 · 틀리면 3초 감소</p>
+      </div>
+    </div>
+    <div class="legend"><span>✅ <b>꽃뫼 · 사기말 · 배미</b> 팡!</span><span>🚫 말미는 피하기</span><span>🎯 12개 성공 → 퀴즈</span></div>
+  </section>
+  <section class="quiz" id="quizView" hidden aria-label="배미마을 지명 퀴즈">
+    <div class="quiz-head">🎉 미션 성공! 마지막 지명 퀴즈</div>
+    <h2>다음 중 <u>화산리의 옛 마을 이름이 아닌 것</u>은?</h2>
+    <div class="choices" id="choices">
+      <button class="choice" data-answer="0">① 꽃뫼</button>
+      <button class="choice" data-answer="1">② 사기말</button>
+      <button class="choice" data-answer="2">③ 배미</button>
+      <button class="choice" data-answer="3">④ 말미</button>
+    </div>
+    <div class="quiz-feedback" id="quizFeedback" role="status" aria-live="polite">정답을 선택해 보세요!</div>
+    <div class="end" id="end" hidden>
+      <div style="font-size:46px">🏆🌸🏺</div>
+      <h3>배미마을 지명 탐험 완료!</h3>
+      <p><strong>정답: ④ 말미</strong><br>화산리에는 ‘꽃뫼’, ‘사기말’, ‘배미’ 등의 이름이 전해집니다. 꽃뫼라는 지명에는 마을의 산세가, 사기말에는 옛 도자기 가마터의 이야기가 담겨 있어요.</p>
+      <button type="button" class="primary" id="againBtn">다시 도전하기 ↻</button>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const stage = document.getElementById('stage');
+  const cover = document.getElementById('cover');
+  const scoreEl = document.getElementById('score');
+  const timeEl = document.getElementById('time');
+  const bestEl = document.getElementById('best');
+  const progressEl = document.getElementById('progressFill');
+  const feedback = document.getElementById('feedback');
+  const quizView = document.getElementById('quizView');
+  const gameView = document.getElementById('gameView');
+  const quizFeedback = document.getElementById('quizFeedback');
+  const end = document.getElementById('end');
+  const choices = document.getElementById('choices');
+  const TOTAL = 12;
+  const labels = [
+    {word:'꽃뫼',emoji:'🌸',good:true},
+    {word:'사기말',emoji:'🏺',good:true},
+    {word:'배미',emoji:'🏡',good:true},
+    {word:'말미',emoji:'❔',good:false}
+  ];
+  const colors = ['#ffc2d5','#b7e9f2','#ffe19d','#cfc9ff','#a9e9cb'];
+  let playing=false,score=0,seconds=45,best=0,clock=null,spawner=null,feedbackTimer=null,runId=0;
+  try{best=Number(localStorage.getItem('baemiBubbleBest')||0)||0}catch(e){}
+  bestEl.innerHTML=`${best} <span>개</span>`;
+  function update(){scoreEl.innerHTML=`${score} <span>/ ${TOTAL}</span>`;timeEl.innerHTML=`${seconds}<span>초</span>`;progressEl.style.width=`${Math.min(100,(score/TOTAL)*100)}%`}
+  function clearBubbles(){stage.querySelectorAll('.bubble,.burst').forEach(el=>el.remove())}
+  function setFeedback(message,wrong=false){
+    feedback.textContent=message; feedback.classList.toggle('wrong',wrong);feedback.classList.add('show');
+    clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>feedback.classList.remove('show'),900);
+  }
+  function popVisual(bubble,good){
+    const stageRect=stage.getBoundingClientRect(),b=bubble.getBoundingClientRect();
+    const burst=document.createElement('div');burst.className='burst';burst.textContent=good?'✨ +1':'💨 -3초';
+    burst.style.left=`${b.left-stageRect.left + b.width/2-22}px`;
+    burst.style.top=`${b.top-stageRect.top + b.height/2-18}px`;
+    stage.appendChild(burst);burst.addEventListener('animationend',()=>burst.remove(),{once:true});
+  }
+  function spawn(){
+    if(!playing)return;
+    const data=labels[Math.floor(Math.random()* (Math.random()<.27?4:3))];
+    const size=83 + Math.random()*25;
+    const width=stage.clientWidth;
+    const safeSpace=Math.max(1,width-size-18);
+    const left=9+Math.random()*safeSpace;
+    const div=document.createElement('button');div.type='button';div.className='bubble';
+    div.style.setProperty('--left',left+'px');div.style.setProperty('--size',size+'px');
+    div.style.setProperty('--bubble-color',colors[Math.floor(Math.random()*colors.length)]);
+    div.style.setProperty('--duration',(5.0+Math.random()*2.1)+'s');
+    div.style.setProperty('--wiggle',((Math.random()*44)-22)+'px');
+    div.style.setProperty('--drift',((Math.random()*60)-30)+'px');
+    div.innerHTML=`<span class="emoji" aria-hidden="true">${data.emoji}</span><span class="word">${data.word}</span>`;
+    div.setAttribute('aria-label',`${data.word} 방울`);
+    div.addEventListener('pointerdown',e=>{
+      e.preventDefault();e.stopPropagation();if(!playing||div.dataset.clicked)return;
+      div.dataset.clicked='1';popVisual(div,data.good);div.remove();
+      if(data.good){score++; if(score>best){best=score;bestEl.innerHTML=`${best} <span>개</span>`;try{localStorage.setItem('baemiBubbleBest',String(best))}catch(e){}}
+        setFeedback(['팡! 잘했어요!','마을 지명 발견!','좋아요! ✨'][Math.floor(Math.random()*3)]);
+      }else{seconds=Math.max(0,seconds-3);setFeedback('앗! 말미는 가짜 지명!',true)}
+      update();
+      if(score>=TOTAL)win();else if(seconds<=0)lose();
+    });
+    div.addEventListener('animationend',()=>div.remove(),{once:true});stage.appendChild(div);
+  }
+  function stop(){playing=false;clearInterval(clock);clearInterval(spawner);clock=null;spawner=null;clearBubbles();feedback.classList.remove('show')}
+  function start(){
+    runId++;stop();score=0;seconds=45;update();gameView.hidden=false;quizView.hidden=true;end.hidden=true;
+    choices.querySelectorAll('button').forEach(b=>{b.disabled=false;b.classList.remove('bad','good')});quizFeedback.textContent='정답을 선택해 보세요!';
+    cover.hidden=true;playing=true;spawn();
+    spawner=setInterval(spawn,560);
+    clock=setInterval(()=>{if(!playing)return;seconds=Math.max(0,seconds-1);update();if(seconds===0)lose()},1000);
+  }
+  function win(){stop();cover.hidden=true;gameView.hidden=true;quizView.hidden=false;quizView.scrollIntoView({behavior:'smooth',block:'nearest'})}
+  function lose(){stop();cover.hidden=false;cover.innerHTML=`<div class="cover-icon">⏰🫧</div><h2>시간이 끝났어요!</h2><p><strong>${score}개</strong>의 마을 지명을 찾았어요.<br>한 번 더 도전해 보세요!</p><button type="button" class="primary" id="retryBtn">다시 도전! ↻</button><p class="tiny">꽃뫼 · 사기말 · 배미 방울만 터뜨리세요.</p>`;document.getElementById('retryBtn').addEventListener('click',start)}
+  document.getElementById('startBtn').addEventListener('click',start);
+  document.getElementById('againBtn').addEventListener('click',start);
+  choices.addEventListener('click',e=>{
+    const b=e.target.closest('.choice');if(!b||b.disabled||!quizView.hidden&&end.hidden===false)return;
+    if(b.dataset.answer==='3'){
+      b.classList.add('good');choices.querySelectorAll('button').forEach(el=>el.disabled=true);
+      quizFeedback.textContent='정답! ④ 말미는 이 퀴즈의 가짜 지명입니다. 🎉';quizFeedback.style.color='#398b69';end.hidden=false;end.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }else{b.classList.add('bad');quizFeedback.textContent='아쉬워요! 이 이름은 화산리에서 전해지는 이름이에요. 다시 골라 보세요.';quizFeedback.style.color='#ca617a';}
+  });
+  update();
+})();
+</script>
+</body>
+</html>

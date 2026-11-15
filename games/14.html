@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>물결 잇기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&family=IBM+Plex+Mono:wght@500;600&family=Nanum+Myeongjo:wght@800&display=swap">
+<style>
+:root {
+  --deep: #0a1a17;
+  --line: #20403a;
+  --paper: #e8f2ee;
+  --muted: #8fb0ae;
+  --aqua: #5fd0c4;
+  --foam: #f4fbf8;
+  --warn: #f0a24a;
+  --bad: #e0583f;
+  --ink: #0a1a17;
+  --stamp: #d23a2b;
+  --f-display: 'Do Hyeon', 'Gowun Dodum', sans-serif;
+  --f-body: 'Gowun Dodum', 'Noto Sans KR', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--deep);
+  color: var(--paper);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 32px;
+}
+.app { max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 16px; }
+.eyebrow { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--aqua); }
+h1 { margin: 8px 0 6px; font: 400 clamp(38px, 10vw, 54px)/1.05 var(--f-display); text-wrap: balance; }
+.rule { margin: 0; color: var(--muted); max-width: 44ch; }
+
+.hud { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; padding-block: 12px; border-block: 1px solid var(--line); }
+.k { font: 500 11px/1.2 var(--f-mono); letter-spacing: .1em; color: var(--muted); }
+.stat { display: flex; flex-direction: column; min-width: 0; }
+.stat .v { font: 600 22px/1.2 var(--f-mono); font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.meter { flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.bar { height: 14px; border-radius: 7px; background: #10281f; border: 1px solid var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 100%; border-radius: 7px; background: var(--aqua); transition: background .2s; }
+.bar.low i { background: var(--bad); }
+
+.stage { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #3f7f8e; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+canvas { display: block; width: 100%; aspect-ratio: 4 / 3; max-width: 100%; touch-action: none; }
+
+.overlay { position: absolute; inset: 0; display: flex; align-items: safe center; justify-content: center; padding: 16px; overflow-y: auto; background: rgba(6, 18, 16, .78); }
+.overlay[hidden] { display: none; }
+.card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: min(340px, 100%); }
+.tag { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--aqua); }
+.card h2 { margin: 0; font: 400 clamp(34px, 10vw, 50px)/1.05 var(--f-display); text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); }
+.card .btn { margin-top: 12px; }
+.card[hidden] { display: none; }
+.quiz-q { margin: 0; color: var(--paper); font: 400 19px/1.3 var(--f-display); }
+#quizCard h2 { font-size: clamp(24px, 6.5vw, 32px); }
+#quizCard, #stampCard { gap: 6px; }
+.lead-label { margin: 0; font: 600 11px/1 var(--f-mono); letter-spacing: .14em; color: var(--aqua); }
+.lead { margin: 0 0 4px; color: var(--paper); font-size: 14px; line-height: 1.5; }
+.choices { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 6px; }
+.card .choices .btn.choice { display: flex; align-items: center; gap: 12px; margin-top: 0; min-height: 42px; padding: 0 16px; background: #10281f; color: var(--paper); border: 1px solid var(--line); font: 400 18px/1 var(--f-body); letter-spacing: 0; text-align: left; }
+.btn.choice:hover { border-color: var(--aqua); filter: none; }
+.btn.choice b { font: 600 15px/1 var(--f-mono); color: var(--aqua); }
+.sheet { width: 100%; display: flex; justify-content: center; padding: 10px; border-radius: 4px; background: #f4ecd6; box-shadow: inset 0 0 0 1px rgba(10, 26, 23, .12), 0 8px 24px rgba(0, 0, 0, .35); }
+.stamp { display: block; width: min(160px, 60%); height: auto; color: var(--stamp); transform: rotate(-8deg); animation: stampIn .7s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes stampIn {
+  0% { transform: scale(2.6) rotate(-22deg); opacity: 0; }
+  55% { transform: scale(.93) rotate(-8deg); opacity: 1; }
+  75% { transform: scale(1.04) rotate(-8deg); }
+  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+#ovMsg { white-space: pre-line; }
+
+.btn { appearance: none; border: 0; width: 100%; min-height: 60px; border-radius: 4px; background: var(--aqua); color: var(--ink); font: 400 24px/1 var(--f-display); letter-spacing: .03em; cursor: pointer; transition: transform .08s, filter .15s; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.btn:hover { filter: brightness(1.07); }
+.btn.hold, .btn:active { transform: translateY(2px) scale(.99); filter: brightness(.9); }
+.btn:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+.btn small { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; opacity: .65; margin-left: 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sw { width: 16px; height: 10px; border-radius: 2px; flex: none; }
+.sw.d { background: none; border-top: 2px dashed var(--foam); height: 0; }
+.sw.g { background: rgba(124, 222, 170, .6); }
+.sw.r { background: var(--bad); }
+@media (prefers-reduced-motion: reduce) { .btn, .bar i { transition: none; } .stamp { animation: none; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <p class="eyebrow">FLOW KEEPER · 난이도 상</p>
+    <h1>물결 잇기</h1>
+    <p class="rule">점선 물결과 같은 세기로 강물을 흐르게 하세요. 꾹 누르면 빨라지고, 떼면 느려져요. 5초 동안 이어가면 성공이에요.</p>
+  </header>
+
+  <section class="hud" aria-label="진행 상황">
+    <div class="stat"><span class="k">경과 시간</span><span class="v"><span id="time">0.0</span><small>/ 5초</small></span></div>
+    <div class="meter">
+      <span class="k">물결 안정도</span>
+      <div class="bar" id="bar" role="progressbar" aria-label="물결 안정도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i id="fill"></i></div>
+    </div>
+    <div class="stat"><span class="k">최고 기록</span><span class="v" id="best">—</span></div>
+  </section>
+
+  <div class="stage">
+    <canvas id="c" aria-label="논밭과 마을을 낀 시골 강가의 물결"></canvas>
+    <div class="overlay" id="ov">
+      <div class="card" id="endCard" role="dialog" aria-live="polite">
+        <p class="tag" id="ovTag">READY</p>
+        <h2 id="ovTitle">물결을 이어가세요</h2>
+        <p id="ovMsg">점선 물결과 같은 세기를 5초 동안 지키면 성공이에요. 목표가 빠르게 움직이고 돌풍도 자주 와요.</p>
+        <button class="btn" id="start" type="button">시작하기</button>
+      </div>
+      <div class="card" id="quizCard" role="dialog" aria-live="polite" hidden>
+        <p class="lead-label">지명 유래</p>
+        <p class="lead">흰 모래가 많이 있고 파도가 많이 치는 바닷가 지형을 뜻하는 '사랑'에서 유래되었다.</p>
+        <p class="tag">BONUS QUIZ</p>
+        <p class="quiz-q" id="quizQ"></p>
+        <div class="choices" id="choices"></div>
+      </div>
+      <div class="card" id="stampCard" role="dialog" aria-live="polite" hidden>
+        <div class="sheet">
+          <svg class="stamp" viewBox="0 0 220 220" role="img" aria-label="합격 도장">
+            <defs>
+              <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="warp"/>
+                <feDisplacementMap in="SourceGraphic" in2="warp" scale="3.5" result="bent"/>
+                <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="9" result="grain"/>
+                <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -5 3.9" result="ink"/>
+                <feComposite in="bent" in2="ink" operator="in"/>
+              </filter>
+            </defs>
+            <g filter="url(#rough)" fill="currentColor" stroke="currentColor" style="font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; font-weight: 800;">
+              <circle cx="110" cy="110" r="100" fill="none" stroke-width="8"/>
+              <circle cx="110" cy="110" r="88" fill="none" stroke-width="2.5"/>
+              <text x="110" y="70" text-anchor="middle" font-size="15" letter-spacing="4" stroke="none">퀴즈 통과</text>
+              <text x="110" y="136" text-anchor="middle" font-size="76" stroke="none">합격</text>
+              <text x="110" y="170" text-anchor="middle" font-size="14" letter-spacing="3" stroke="none">사랑리 사랭이</text>
+            </g>
+          </svg>
+        </div>
+        <button class="btn" id="again2" type="button">다시 하기</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="push" type="button">꾹 눌러 물결 밀기<small>SPACE</small></button>
+
+  <ul class="legend" aria-label="화면 보는 법">
+    <li><span class="sw d"></span>점선 물결: 맞춰야 할 세기</li>
+    <li><span class="sw g"></span>초록 띠 안: 안정도 회복</li>
+    <li><span class="sw r"></span>띠 밖: 안정도 감소</li>
+  </ul>
+</main>
+
+<script>
+(() => {
+  const DURATION = 5;                  // 성공까지 버텨야 하는 시간(초)
+  const K = 1.4, C = 1.9, THRUST = 2.6; // 물의 복원력, 저항, 미는 힘
+  const DISPLAY = '"Do Hyeon", "Gowun Dodum", sans-serif';
+  const LAYERS = ['#3f7f8e', '#46909c', '#52a2aa', '#73bcbc', '#a8d8d0'];
+  const POSTS = [{ x: 0.10, r: 0.034 }, { x: 0.52, r: 0.042 }, { x: 0.74, r: 0.03 }];
+
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  const timeEl = document.getElementById('time');
+  const barEl = document.getElementById('bar');
+  const fillEl = document.getElementById('fill');
+  const bestEl = document.getElementById('best');
+  const ov = document.getElementById('ov');
+  const ovTag = document.getElementById('ovTag');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovMsg = document.getElementById('ovMsg');
+  const startBtn = document.getElementById('start');
+  const pushBtn = document.getElementById('push');
+  const endCard = document.getElementById('endCard');
+  const quizCard = document.getElementById('quizCard');
+  const stampCard = document.getElementById('stampCard');
+  const choicesEl = document.getElementById('choices');
+  const again2 = document.getElementById('again2');
+
+  // 성공했을 때 나오는 객관식 퀴즈. answer는 정답 보기의 번호(1부터)다.
+  const QUIZ = {
+    q: '사랑리의 옛 지명으로 알맞는 것은?',
+    options: ['새랭이', '구름꼴', '평밭'],
+    answer: 1,
+    note: '사랑리의 옛 지명은 새랭이예요.'
+  };
+  document.getElementById('quizQ').textContent = QUIZ.q;
+  QUIZ.options.forEach((txt, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn choice';
+    b.setAttribute('aria-label', (i + 1) + '번 ' + txt);
+    b.innerHTML = '<b>' + (i + 1) + '</b><span></span>';
+    b.lastChild.textContent = txt;
+    b.addEventListener('click', () => answer(i + 1));
+    choicesEl.appendChild(b);
+  });
+
+  let W = 400, H = 300, dpr = 1, bg = null;
+  let state = 'ready', won = false;
+  let f = 0.5, fv = 0, hold = false, T = 0, stab = 1, tgt = 0.5, tol = 0.105;
+  let gust = null, nextGust = 1.6, pendF = 0, warned = false, notice = null;
+  let ph = [0, 0, 0, 0, 0], phT = 0, streaks = [], sparks = [], lastT, best = 0, endTimer;
+
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const rnd = Math.random;
+  // 배경의 풀과 버드나무 잎 무늬가 새로고침마다 같도록 고정 난수를 쓴다.
+  const srnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+  try { best = parseFloat(localStorage.getItem('wave-best-5')) || 0; } catch (e) { best = 0; }
+  showBest();
+  for (let i = 0; i < 26; i++) streaks.push({ x: rnd(), y: rnd(), len: 0.03 + rnd() * 0.05, sp: 0.5 + rnd() });
+  for (let i = 0; i < 18; i++) sparks.push({ x: rnd(), y: 0.52 + rnd() * 0.44, p: rnd() * 6.28 });
+
+  function showBest() { bestEl.textContent = best > 0 ? best.toFixed(1) + '초' : '—'; }
+
+  /* ---------- 목표 물결과 돌풍 ---------- */
+  function targetAt(t) {
+    const m = 0.75 + 0.25 * (t / DURATION);
+    const c = 0.52 + m * (0.20 * Math.sin(t * 1.5 + 0.7) + 0.12 * Math.sin(t * 3.1 + 2.1));
+    return clamp(c, 0.2, 0.84);
+  }
+  function tolAt(t) { return 0.105 - 0.035 * (t / DURATION); }
+
+  function scheduleGust() {
+    const p = T / DURATION;
+    nextGust = T + (1.3 + rnd() * 1.2) * (1 - 0.2 * p);
+    pendF = (rnd() < 0.65 ? -1 : 1) * (1.0 + rnd() * 0.8) * (0.9 + 0.3 * p);
+    warned = false;
+  }
+
+  /* ---------- 진행 ---------- */
+  function startGame() {
+    clearTimeout(endTimer);
+    state = 'play'; won = false;
+    quizCard.hidden = true; stampCard.hidden = true; endCard.hidden = false;
+    T = 0; fv = 0; stab = 1; hold = false; gust = null; notice = null;
+    tgt = targetAt(0); tol = tolAt(0); f = tgt;
+    nextGust = 1.6; pendF = -1; warned = false;
+    ov.hidden = true;
+    pushBtn.classList.remove('hold');
+  }
+
+  function finish(win) {
+    state = 'over'; won = win; hold = false;
+    pushBtn.classList.remove('hold');
+    if (T > best) {
+      best = T;
+      try { localStorage.setItem('wave-best-5', String(best)); } catch (e) { /* 저장 없이도 동작 */ }
+      showBest();
+    }
+    endTimer = setTimeout(() => {
+      if (win) { showQuiz(); return; }
+      ovTag.textContent = 'TRY AGAIN';
+      ovTitle.textContent = '물결이 멈췄어요';
+      ovMsg.textContent = T.toFixed(1) + '초 동안 이어갔어요. 최고 기록은 ' + best.toFixed(1) + '초예요.';
+      startBtn.textContent = '다시 하기';
+      ov.hidden = false;
+      startBtn.focus();
+    }, win ? 400 : 700);
+  }
+
+  function step(dt, now) {
+    if (state === 'play') {
+      T += dt;
+      let force = 0;
+      if (!gust) {
+        if (!warned && T >= nextGust - 0.9) {
+          warned = true;
+          notice = { text: pendF < 0 ? '물길이 막힌다' : '물살이 거세진다', color: pendF < 0 ? '#ff8a70' : '#f0c24a', t0: now, dur: 1100 };
+        }
+        if (T >= nextGust) gust = { t0: T, dur: 0.8, F: pendF };
+      }
+      if (gust) {
+        const u = (T - gust.t0) / gust.dur;
+        if (u >= 1) { gust = null; scheduleGust(); } else force = gust.F * Math.sin(Math.PI * u);
+      }
+      fv += ((hold ? THRUST : 0) - K * f - C * fv + force) * dt;
+      f += fv * dt;
+      if (f < 0) { f = 0; if (fv < 0) fv = 0; }
+      if (f > 1) { f = 1; if (fv > 0) fv = 0; }
+
+      tgt = targetAt(T); tol = tolAt(T);
+      const err = Math.abs(f - tgt);
+      if (err <= tol) stab = Math.min(1, stab + 0.14 * dt);
+      else stab -= (0.45 + 0.9 * Math.min(1, (err - tol) / 0.25)) * dt;
+      if (stab <= 0) { stab = 0; finish(false); }
+      else if (T >= DURATION) { T = DURATION; finish(true); }
+    } else if (state === 'over') {
+      if (won) { f += (0.7 - f) * Math.min(1, dt * 2); }
+      else { fv += (-K * f - C * fv) * dt; f = Math.max(0, f + fv * dt); }
+    } else {
+      f = 0.5 + 0.05 * Math.sin(now / 900); tgt = 0.5; tol = 0.105;
+    }
+    const sp = 0.4 + 3.2 * f;
+    for (let i = 0; i < 5; i++) ph[i] += dt * sp * (0.7 + 0.18 * i);
+    phT += dt * (0.4 + 3.2 * tgt) * 1.06;
+    const flow = 0.05 + 0.9 * f;
+    streaks.forEach(s => { s.x += flow * 0.5 * s.sp * dt; if (s.x > 1.1) s.x -= 1.2; });
+  }
+
+  /* ---------- 배경: 논밭과 마을이 보이는 시골 강가 ---------- */
+  function house(b, x, y, w, tile) {
+    const h = w * 0.55;
+    b.fillStyle = '#eadfc4'; b.fillRect(x - w / 2, y - h, w, h);
+    b.fillStyle = tile ? '#5d6670' : '#9c8250';
+    b.beginPath();
+    b.moveTo(x - w * 0.64, y - h + 1);
+    b.quadraticCurveTo(x - w * 0.3, y - h - w * 0.34, x, y - h - w * 0.38);
+    b.quadraticCurveTo(x + w * 0.3, y - h - w * 0.34, x + w * 0.64, y - h + 1);
+    b.closePath(); b.fill();
+    b.fillStyle = '#6b5334'; b.fillRect(x - w * 0.09, y - h * 0.62, w * 0.18, h * 0.62);
+    b.fillStyle = '#f5ecd0'; b.fillRect(x + w * 0.2, y - h * 0.8, w * 0.18, h * 0.32);
+  }
+
+  function tree(b, x, y, r, col) {
+    b.fillStyle = '#5a4630'; b.fillRect(x - r * 0.1, y - r * 0.6, r * 0.2, r * 0.7);
+    b.fillStyle = col;
+    [[0, -1.1, 1], [-0.6, -0.8, 0.7], [0.6, -0.8, 0.75]].forEach(c => {
+      b.beginPath(); b.arc(x + c[0] * r, y + c[1] * r, c[2] * r, 0, 6.2832); b.fill();
+    });
+  }
+
+  function willow(b, x, base) {
+    b.strokeStyle = '#5a4630'; b.lineWidth = W * 0.016; b.lineCap = 'round';
+    b.beginPath(); b.moveTo(x, base); b.quadraticCurveTo(x + W * 0.01, H * 0.3, x - W * 0.004, H * 0.17); b.stroke();
+    for (let k = 0; k < 30; k++) {
+      const sx = x + (k - 15) * W * 0.0085, sy = H * 0.15 + H * 0.025 * Math.abs(k - 15) / 15 * 1.5;
+      const len = H * (0.13 + 0.07 * srnd(k + 5));
+      b.strokeStyle = k % 2 ? '#7fa95c' : '#6a9a50'; b.lineWidth = 2;
+      b.beginPath(); b.moveTo(sx, sy);
+      b.quadraticCurveTo(sx + (k - 15) * W * 0.002, sy + len * 0.6, sx + (k - 15) * W * 0.0035, sy + len);
+      b.stroke();
+    }
+  }
+
+  function buildBg() {
+    bg = document.createElement('canvas');
+    bg.width = cv.width; bg.height = cv.height;
+    const b = bg.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const wl = H * 0.46;
+
+    let gr = b.createLinearGradient(0, 0, 0, wl);
+    gr.addColorStop(0, '#8cc7e6'); gr.addColorStop(0.65, '#e4f1e2'); gr.addColorStop(1, '#f6f0d4');
+    b.fillStyle = gr; b.fillRect(0, 0, W, wl);
+
+    b.fillStyle = 'rgba(255,255,255,.8)';
+    [[0.2, 0.1, 0.11, 0.028], [0.28, 0.115, 0.08, 0.022], [0.12, 0.125, 0.07, 0.018], [0.62, 0.07, 0.12, 0.026], [0.72, 0.09, 0.08, 0.02], [0.86, 0.16, 0.09, 0.02]].forEach(c => {
+      b.beginPath(); b.ellipse(c[0] * W, c[1] * H, c[2] * W, c[3] * H, 0, 0, Math.PI * 2); b.fill();
+    });
+
+    b.fillStyle = '#a9c7a2';
+    b.beginPath(); b.moveTo(0, wl);
+    for (let x = 0; x <= W; x += 6) b.lineTo(x, H * 0.29 - H * 0.07 * (0.6 * Math.sin(x / W * 4 + 0.4) + 0.4 * Math.sin(x / W * 11 + 1.1)));
+    b.lineTo(W, wl); b.closePath(); b.fill();
+    b.fillStyle = '#86ad88';
+    b.beginPath(); b.moveTo(0, wl);
+    for (let x = 0; x <= W; x += 6) b.lineTo(x, H * 0.335 - H * 0.04 * (0.6 * Math.sin(x / W * 6 + 2.0) + 0.4 * Math.sin(x / W * 15 + 0.3)));
+    b.lineTo(W, wl); b.closePath(); b.fill();
+
+    gr = b.createLinearGradient(0, H * 0.33, 0, wl);
+    gr.addColorStop(0, '#c9d67c'); gr.addColorStop(1, '#93b95c');
+    b.fillStyle = gr; b.fillRect(0, H * 0.33, W, wl - H * 0.33);
+    b.strokeStyle = 'rgba(70,110,40,.3)';
+    for (let r = 0; r < 6; r++) {
+      b.lineWidth = 1 + r * 0.4;
+      b.beginPath(); b.moveTo(0, H * (0.345 + r * 0.02)); b.lineTo(W, H * (0.345 + r * 0.02)); b.stroke();
+    }
+
+    tree(b, W * 0.31, H * 0.358, W * 0.034, '#5b9650');
+    tree(b, W * 0.52, H * 0.355, W * 0.03, '#4f8a4a');
+    tree(b, W * 0.75, H * 0.352, W * 0.034, '#5b9650');
+    tree(b, W * 0.86, H * 0.356, W * 0.028, '#4f8a4a');
+    house(b, W * 0.16, H * 0.372, W * 0.07, false);
+    house(b, W * 0.245, H * 0.366, W * 0.06, true);
+    house(b, W * 0.6, H * 0.368, W * 0.065, false);
+    house(b, W * 0.67, H * 0.362, W * 0.055, false);
+
+    gr = b.createLinearGradient(0, H * 0.4, 0, wl);
+    gr.addColorStop(0, '#7fac56'); gr.addColorStop(1, '#4f7e3c');
+    b.fillStyle = gr;
+    b.beginPath(); b.moveTo(0, wl);
+    for (let x = 0; x <= W; x += 6) b.lineTo(x, H * 0.412 - H * 0.008 * Math.sin(x / W * 9 + 1));
+    b.lineTo(W, wl); b.closePath(); b.fill();
+    b.strokeStyle = '#3f6b32'; b.lineWidth = 1.4; b.lineCap = 'round';
+    for (let i = 0; i < 80; i++) {
+      const x = W * srnd(i * 3 + 1), y = H * (0.42 + 0.036 * srnd(i * 5 + 2)), h = H * (0.012 + 0.012 * srnd(i * 7 + 3));
+      b.beginPath(); b.moveTo(x, y); b.lineTo(x - h * 0.4, y - h); b.moveTo(x, y); b.lineTo(x + h * 0.4, y - h * 0.9); b.stroke();
+    }
+    for (let i = 0; i < 9; i++) {
+      const x = W * (0.2 + i * 0.075);
+      b.fillStyle = '#6b5334'; b.fillRect(x - 1.6, H * 0.392, 3.2, H * 0.05);
+      if (i < 8) {
+        b.strokeStyle = '#a8884f'; b.lineWidth = 1.6;
+        b.beginPath(); b.moveTo(x, H * 0.402); b.lineTo(x + W * 0.075, H * 0.402); b.moveTo(x, H * 0.42); b.lineTo(x + W * 0.075, H * 0.42); b.stroke();
+      }
+    }
+    willow(b, W * 0.06, wl - H * 0.01);
+
+    gr = b.createLinearGradient(0, wl - H * 0.06, 0, wl + H * 0.04);
+    gr.addColorStop(0, 'rgba(240,248,240,0)'); gr.addColorStop(1, 'rgba(240,248,240,.4)');
+    b.fillStyle = gr; b.fillRect(0, wl - H * 0.06, W, H * 0.1);
+  }
+
+  function fit() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth || 400;
+    H = Math.round(W * 3 / 4);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    buildBg();
+  }
+
+  /* ---------- 물줄기 ---------- */
+  function ampOf(v) { return H * (0.010 + 0.048 * v); }
+  function surf(i, x, amp) {
+    const a = x / (W * (0.42 - 0.06 * i)) * 6.2832 - ph[i];
+    return H * (0.46 + 0.11 * i) + amp * (0.55 + 0.2 * i) * (Math.sin(a) + 0.3 * Math.sin(2.1 * a + 1.3));
+  }
+
+  function layer(i, amp) {
+    ctx.beginPath(); ctx.moveTo(0, H + 2);
+    for (let x = 0; x <= W + 6; x += 6) ctx.lineTo(x, surf(i, x, amp));
+    ctx.lineTo(W + 6, H + 2); ctx.closePath();
+    ctx.fillStyle = LAYERS[i]; ctx.fill();
+    if (i >= 1) {
+      ctx.beginPath();
+      for (let x = 0; x <= W + 6; x += 6) { const y = surf(i, x, amp); if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+      ctx.strokeStyle = 'rgba(244,251,248,' + (0.2 + 0.55 * f * (i / 4)).toFixed(3) + ')';
+      ctx.lineWidth = 1 + i * 0.6; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+  }
+
+  function drawPost(cx, cy, r) {
+    const w = r * 0.9, top = cy - r * 2.1;
+    ctx.fillStyle = '#7a5c3a'; ctx.fillRect(cx - w / 2, top, w, cy + r * 0.3 - top);
+    ctx.fillStyle = '#4e3a22';
+    ctx.beginPath(); ctx.ellipse(cx, top, w / 2, w * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx - w * 0.15, top + 3); ctx.lineTo(cx - w * 0.15, cy); ctx.stroke();
+    ctx.strokeStyle = '#c9a96a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - w / 2, top + r * 0.5); ctx.lineTo(cx + w / 2, top + r * 0.62); ctx.stroke();
+  }
+
+  function drawPosts() {
+    POSTS.forEach((o, i) => {
+      const cx = o.x * W, cy = H * 0.70, r = o.r * W;
+      drawPost(cx, cy, r);
+      ctx.strokeStyle = 'rgba(244,251,248,' + (0.35 + 0.4 * f).toFixed(3) + ')';
+      ctx.lineWidth = 2; ctx.lineCap = 'round';
+      const L = r * (1.2 + 2.6 * f);
+      for (let k = 0; k < 3; k++) {
+        const y = cy + r * (0.3 + 0.16 * k);
+        ctx.beginPath(); ctx.moveTo(cx + r * 0.7, y); ctx.lineTo(cx + r * 0.7 + L * (1 - 0.22 * k), y + Math.sin(phT * 2 + i + k) * 1.5); ctx.stroke();
+      }
+    });
+  }
+
+  function drawBoat(amp) {
+    const i = 3, x = W * 0.3, k = Math.max(0.8, W / 640);
+    const y = surf(i, x, amp);
+    const slope = (surf(i, x + 6, amp) - surf(i, x - 6, amp)) / 12;
+    ctx.save();
+    ctx.translate(x, y - 4 * k);
+    ctx.rotate(Math.atan(slope) * 0.8);
+    ctx.scale(k, k);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#6b5334'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(6, -4); ctx.lineTo(-20, -30); ctx.stroke();
+    ctx.fillStyle = '#5c7a96';
+    ctx.beginPath(); ctx.ellipse(-4, -12, 7, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e8b891';
+    ctx.beginPath(); ctx.arc(-4, -23, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d9b86a';
+    ctx.beginPath(); ctx.moveTo(-15, -24); ctx.lineTo(-4, -34); ctx.lineTo(7, -24); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a6a43'; ctx.strokeStyle = '#4e3a22'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-34, -8); ctx.quadraticCurveTo(-26, 8, -6, 9); ctx.lineTo(16, 9); ctx.quadraticCurveTo(30, 6, 38, -9); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#caa56b'; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(-30, -3); ctx.lineTo(34, -4); ctx.stroke();
+    ctx.restore();
+  }
+
+  // 화면 왼쪽 아래 갈대: 흐름이 세질수록 하류 쪽으로 기운다.
+  function drawReeds(now) {
+    const xs = [0.02, 0.045, 0.07, 0.095];
+    ctx.save();
+    ctx.lineCap = 'round';
+    xs.forEach((u, i) => {
+      const bx = u * W, h = H * (0.12 + 0.07 * srnd(i + 9));
+      const lean = 0.06 * Math.sin(now / 900 + i * 1.3) + 0.25 * f;
+      const tx = bx + Math.sin(lean) * h, ty = H - Math.cos(lean) * h;
+      ctx.strokeStyle = '#7f8f4a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(bx, H + 2); ctx.quadraticCurveTo(bx + (tx - bx) * 0.2, H - h * 0.6, tx, ty); ctx.stroke();
+      ctx.strokeStyle = '#5f7f3c'; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(bx + 3, H + 2); ctx.quadraticCurveTo(bx + 12, H - h * 0.35, bx + 18 + 10 * f, H - h * 0.55); ctx.stroke();
+      ctx.save();
+      ctx.translate(tx, ty); ctx.rotate(lean);
+      ctx.fillStyle = 'rgba(228,214,192,.95)';
+      ctx.beginPath(); ctx.ellipse(0, -H * 0.03, W * 0.011, H * 0.04, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(190,170,148,.9)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -H * 0.07); ctx.stroke();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+
+  function drawGhost() {
+    const A = ampOf(tgt) * 0.95, len = W * (0.42 - 0.12), base = H * 0.72;
+    ctx.save();
+    ctx.setLineDash([9, 7]); ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(244,251,248,.9)';
+    ctx.beginPath();
+    for (let x = 0; x <= W + 6; x += 6) {
+      const a = x / len * 6.2832 - phT;
+      const y = base + A * (Math.sin(a) + 0.3 * Math.sin(2.1 * a + 1.3));
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '400 ' + Math.max(11, H * 0.042) + 'px ' + DISPLAY;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(8,22,20,.8)'; ctx.fillStyle = '#f4fbf8';
+    ctx.strokeText('목표 물결', W * 0.02, base - A * 1.6 - 4);
+    ctx.fillText('목표 물결', W * 0.02, base - A * 1.6 - 4);
+    ctx.restore();
+  }
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawGauge() {
+    const gw = Math.max(14, W * 0.032), gx = W - Math.max(26, W * 0.06), yT = H * 0.12, yB = H * 0.88;
+    const Y = v => yB - (yB - yT) * v;
+    const inBand = Math.abs(f - tgt) <= tol;
+    ctx.save();
+    ctx.fillStyle = 'rgba(8,22,20,.74)';
+    rr(gx - gw / 2, yT, gw, yB - yT, gw / 2); ctx.fill();
+    ctx.save();
+    rr(gx - gw / 2, yT, gw, yB - yT, gw / 2); ctx.clip();
+    const top = Y(Math.min(1, tgt + tol)), bot = Y(Math.max(0, tgt - tol));
+    ctx.fillStyle = inBand ? 'rgba(160,240,196,.85)' : 'rgba(124,222,170,.55)';
+    ctx.fillRect(gx - gw / 2, top, gw, bot - top);
+    ctx.fillStyle = 'rgba(95,208,196,.35)';
+    ctx.fillRect(gx - gw * 0.14, Y(f), gw * 0.28, yB - Y(f));
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(232,242,238,.8)'; ctx.lineWidth = 1.5;
+    rr(gx - gw / 2, yT, gw, yB - yT, gw / 2); ctx.stroke();
+    const ny = Y(f), col = inBand ? '#f4fbf8' : '#ff8a70';
+    ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(gx - gw / 2 - 4, ny); ctx.lineTo(gx + gw / 2 + 4, ny); ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.moveTo(gx - gw / 2 - 16, ny - 6); ctx.lineTo(gx - gw / 2 - 16, ny + 6); ctx.lineTo(gx - gw / 2 - 5, ny); ctx.closePath(); ctx.fill();
+    ctx.font = '600 ' + Math.max(9, H * 0.032) + 'px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = 'rgba(232,242,238,.85)';
+    ctx.fillText('FLOW', gx, yT - 6);
+    ctx.restore();
+  }
+
+  function drawNotice(now) {
+    if (!notice) return;
+    const q = (now - notice.t0) / notice.dur;
+    if (q >= 1) { notice = null; return; }
+    ctx.save();
+    ctx.globalAlpha = q < 0.7 ? 1 : 1 - (q - 0.7) / 0.3;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '400 ' + (H * 0.075) + 'px ' + DISPLAY;
+    ctx.lineJoin = 'round'; ctx.lineWidth = H * 0.016; ctx.strokeStyle = 'rgba(8,22,20,.9)';
+    const x = W * 0.45, y = H * 0.2 - q * H * 0.02;
+    ctx.strokeText(notice.text, x, y); ctx.fillStyle = notice.color; ctx.fillText(notice.text, x, y);
+    ctx.restore();
+  }
+
+  function render(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (bg) ctx.drawImage(bg, 0, 0, W, H);
+
+    const amp = ampOf(f);
+    for (let i = 0; i < 3; i++) layer(i, amp);
+    drawPosts();
+    layer(3, amp);
+    drawBoat(amp);
+    layer(4, amp);
+    drawReeds(now);
+
+    const flow = 0.05 + 0.9 * f;
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.16 + 0.22 * flow).toFixed(3) + ')'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    streaks.forEach(s => {
+      const x = s.x * W, y = H * (0.54 + s.y * 0.42), len = W * s.len * (0.6 + flow);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+    });
+
+    sparks.forEach(s => {
+      const a = Math.max(0, Math.sin(now / 260 + s.p));
+      if (a < 0.2) return;
+      const x = s.x * W, y = s.y * H, r = 2 + 3 * a;
+      ctx.strokeStyle = 'rgba(255,252,230,' + (0.75 * a).toFixed(3) + ')'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.stroke();
+    });
+
+    const sh = ctx.createLinearGradient(0, H * 0.45, 0, H);
+    sh.addColorStop(0, 'rgba(5,24,20,0)'); sh.addColorStop(1, 'rgba(5,24,20,.36)');
+    ctx.fillStyle = sh; ctx.fillRect(0, H * 0.45, W, H * 0.55);
+
+    drawGhost();
+    drawGauge();
+    drawNotice(now);
+
+    timeEl.textContent = T.toFixed(1);
+    fillEl.style.width = (stab * 100).toFixed(1) + '%';
+    barEl.classList.toggle('low', stab < 0.3);
+    barEl.setAttribute('aria-valuenow', String(Math.round(stab * 100)));
+  }
+
+  function frame(now) {
+    const dt = clamp((now - lastT) / 1000, 0, 0.04);
+    lastT = now;
+    step(dt, now);
+    render(now);
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 성공 후 객관식 퀴즈 ---------- */
+  function showQuiz() {
+    endCard.hidden = true; stampCard.hidden = true; quizCard.hidden = false;
+    ov.hidden = false;
+    choicesEl.firstChild.focus({ preventScroll: true });
+  }
+  function answer(n) {
+    if (quizCard.hidden) return;
+    quizCard.hidden = true;
+    if (n === QUIZ.answer) {          // 정답이면 결과창 대신 합격 도장이 찍힌다
+      stampCard.hidden = false;
+      again2.focus({ preventScroll: true });
+      return;
+    }
+    endCard.hidden = false;
+    ovTag.textContent = 'SUCCESS · 오답';
+    ovTitle.textContent = '정답은 ' + QUIZ.answer + '번이에요';
+    ovMsg.textContent = QUIZ.note + '\n' + DURATION + '초 동안 물결을 이어갔어요.';
+    startBtn.textContent = '다시 하기';
+    startBtn.focus({ preventScroll: true });
+  }
+  again2.addEventListener('click', startGame);
+  document.addEventListener('keydown', e => {
+    if (quizCard.hidden || ov.hidden) return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= QUIZ.options.length) answer(n);
+  });
+
+  /* ---------- 입력: 꾹 누르면 밀고, 떼면 흐름이 줄어요 ---------- */
+  function press() { if (state === 'play') { hold = true; pushBtn.classList.add('hold'); } }
+  function release() { hold = false; pushBtn.classList.remove('hold'); }
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
+  pushBtn.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', release);
+  window.addEventListener('blur', release);
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  pushBtn.addEventListener('contextmenu', e => e.preventDefault());
+  startBtn.addEventListener('click', startGame);
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || !ov.hidden) return;
+    e.preventDefault();
+    press();
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code !== 'Space' || !ov.hidden) return;
+    e.preventDefault();
+    release();
+  });
+  window.addEventListener('resize', fit);
+
+  fit();
+  lastT = performance.now();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

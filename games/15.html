@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>갈대 뽑기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=IBM+Plex+Mono:wght@500;600&family=Nanum+Myeongjo:wght@800&display=swap">
+<style>
+:root {
+  --mud: #17130e;
+  --mud-hi: #241d14;
+  --line: #3a3023;
+  --paper: #f1ead6;
+  --muted: #aaa28c;
+  --gold: #e3b23c;
+  --leaf: #7cc04a;
+  --snap: #d6452f;
+  --ink: #17130e;
+  --stamp: #d23a2b;
+  --f-display: 'Jua', 'Gowun Dodum', sans-serif;
+  --f-body: 'Gowun Dodum', 'Noto Sans KR', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--mud);
+  color: var(--paper);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 32px;
+}
+.app { max-width: 560px; margin-inline: auto; display: flex; flex-direction: column; gap: 16px; }
+.eyebrow { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--gold); }
+h1 { margin: 8px 0 6px; font: 400 clamp(38px, 10vw, 52px)/1.05 var(--f-display); text-wrap: balance; }
+.rule { margin: 0; color: var(--muted); max-width: 40ch; }
+
+.hud { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; padding-block: 12px; border-block: 1px solid var(--line); }
+.pips-wrap { display: flex; flex-direction: column; gap: 4px; margin-right: auto; }
+.k { font: 500 11px/1.2 var(--f-mono); letter-spacing: .1em; color: var(--muted); }
+.pips { display: flex; gap: 8px; }
+.pip { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); transition: background .2s, border-color .2s, transform .2s; }
+.pip.on { background: var(--leaf); border-color: var(--leaf); transform: scale(1.08); }
+.stat { display: flex; flex-direction: column; min-width: 0; }
+.stat .v { font: 600 22px/1.2 var(--f-mono); font-variant-numeric: tabular-nums; }
+
+.stage { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #8d8c64; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+canvas { display: block; width: 100%; aspect-ratio: 1 / 1; max-width: 100%; cursor: grab; touch-action: none; }
+canvas:active { cursor: grabbing; }
+
+.overlay { position: absolute; inset: 0; display: flex; align-items: safe center; justify-content: center; padding: 16px; overflow-y: auto; background: rgba(15, 12, 8, .82); }
+.overlay[hidden] { display: none; }
+.card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: min(320px, 100%); }
+.tag { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--gold); }
+.card h2 { margin: 0; font: 400 clamp(36px, 11vw, 52px)/1.05 var(--f-display); text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); }
+.card .btn { margin-top: 12px; }
+.card[hidden] { display: none; }
+#ovMsg { white-space: pre-line; }
+.quiz-q { margin: 0; color: var(--paper); font-size: 15.5px; line-height: 1.55; }
+#quizCard h2 { font-size: clamp(30px, 8vw, 40px); }
+.lead-label { margin: 0; font: 600 11px/1 var(--f-mono); letter-spacing: .14em; color: var(--gold); }
+.lead { margin: 0 0 6px; color: var(--paper); font-size: 14.5px; line-height: 1.55; }
+.sheet { width: 100%; display: flex; justify-content: center; padding: 18px; border-radius: 4px; background: #f4ecd6; box-shadow: inset 0 0 0 1px rgba(23, 19, 14, .12), 0 8px 24px rgba(0, 0, 0, .35); }
+.stamp { display: block; width: min(220px, 62%); height: auto; color: var(--stamp); transform: rotate(-8deg); animation: stampIn .7s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes stampIn {
+  0% { transform: scale(2.6) rotate(-22deg); opacity: 0; }
+  55% { transform: scale(.93) rotate(-8deg); opacity: 1; }
+  75% { transform: scale(1.04) rotate(-8deg); }
+  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+.ox { display: flex; gap: 12px; width: 100%; margin-top: 8px; }
+.card .ox .btn { flex: 1; min-height: 68px; margin-top: 0; padding: 0; font-size: 40px; }
+.card .ox .btn.x { background: var(--snap); color: var(--paper); }
+
+.btn { appearance: none; border: 0; width: 100%; min-height: 60px; border-radius: 4px; background: var(--gold); color: var(--ink); font: 400 24px/1 var(--f-display); letter-spacing: .03em; cursor: pointer; transition: transform .08s, filter .15s; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.btn:hover { filter: brightness(1.07); }
+.btn.hold, .btn:active { transform: translateY(2px) scale(.99); filter: brightness(.92); }
+.btn:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+.btn small { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; opacity: .65; margin-left: 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sw { width: 12px; height: 12px; border-radius: 2px; flex: none; }
+.sw.n { background: #5a5648; }
+.sw.g { background: var(--leaf); }
+.sw.r { background: var(--snap); }
+@media (prefers-reduced-motion: reduce) { .pip, .btn { transition: none; } .stamp { animation: none; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <p class="eyebrow">REED FIELD · 난이도 상</p>
+    <h1>갈대 뽑기</h1>
+    <p class="rule">갈대밭에서 갈대 3대를 뽑으세요. 기회는 5번뿐이고, 뿌리는 쉽게 빠지지 않아요. 성공하면 보너스 퀴즈가 나와요.</p>
+  </header>
+
+  <section class="hud" aria-label="진행 상황">
+    <div class="pips-wrap">
+      <span class="k">뽑은 갈대</span>
+      <div class="pips" id="pips" role="img" aria-label="뽑은 갈대 0 / 3"></div>
+    </div>
+    <div class="stat"><span class="k">남은 기회</span><span class="v" id="left">5</span></div>
+    <div class="stat"><span class="k">난이도</span><span class="v">상</span></div>
+  </section>
+
+  <div class="stage" id="stage">
+    <canvas id="c" aria-label="갈대가 자라는 갈대밭"></canvas>
+    <div class="overlay" id="ov" hidden>
+      <div class="card" id="quizCard" role="dialog" aria-live="polite" hidden>
+        <p class="lead-label">노진리 이야기</p>
+        <p class="lead">예부터 물이 좋고 갈대가 어우러진 우물이 유명해서 '노진'이라고 불렸다.</p>
+        <p class="tag">BONUS QUIZ</p>
+        <h2>O 또는 X?</h2>
+        <p class="quiz-q" id="quizQ"></p>
+        <div class="ox">
+          <button class="btn" id="ansO" type="button" aria-label="O, 맞아요">O</button>
+          <button class="btn x" id="ansX" type="button" aria-label="X, 틀려요">X</button>
+        </div>
+      </div>
+      <div class="card" id="endCard" role="dialog" aria-live="polite">
+        <p class="tag" id="ovTag"></p>
+        <h2 id="ovTitle"></h2>
+        <p id="ovMsg"></p>
+        <button class="btn" id="again" type="button">다시 하기</button>
+      </div>
+      <div class="card" id="stampCard" role="dialog" aria-live="polite" hidden>
+        <div class="sheet">
+          <svg class="stamp" viewBox="0 0 220 220" role="img" aria-label="합격 도장">
+            <defs>
+              <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="warp"/>
+                <feDisplacementMap in="SourceGraphic" in2="warp" scale="3.5" result="bent"/>
+                <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="9" result="grain"/>
+                <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -5 3.9" result="ink"/>
+                <feComposite in="bent" in2="ink" operator="in"/>
+              </filter>
+            </defs>
+            <g filter="url(#rough)" fill="currentColor" stroke="currentColor" style="font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; font-weight: 800;">
+              <circle cx="110" cy="110" r="100" fill="none" stroke-width="8"/>
+              <circle cx="110" cy="110" r="88" fill="none" stroke-width="2.5"/>
+              <text x="110" y="70" text-anchor="middle" font-size="15" letter-spacing="4" stroke="none">퀴즈 통과</text>
+              <text x="110" y="136" text-anchor="middle" font-size="76" stroke="none">합격</text>
+              <text x="110" y="170" text-anchor="middle" font-size="14" letter-spacing="3" stroke="none">노진리 갈우물</text>
+            </g>
+          </svg>
+        </div>
+        <button class="btn" id="again2" type="button">다시 하기</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="pull" type="button">꾹 눌러 당기기<small>SPACE</small></button>
+
+  <ul class="legend" aria-label="게이지 보는 법">
+    <li><span class="sw n"></span>뿌리가 버티는 중</li>
+    <li><span class="sw g"></span>이때 손을 떼면 뽑혀요</li>
+    <li><span class="sw r"></span>넘기면 줄기가 끊어져요</li>
+  </ul>
+</main>
+
+<script>
+(() => {
+  const NEED = 3;          // 성공에 필요한 갈대 수
+  const CHANCES = 5;       // 주어지는 기회
+  const LIFT = 0.18;       // 당기는 동안 올라오는 높이(화면 비율)
+  const WIN_LIFT = 0.30;   // 뽑힌 뒤 들어 올리는 높이
+  const YB = 0.70;         // 수면 높이(화면 비율)
+  // rate: 게이지가 차는 속도(초당), zw: 뽑히는 구간의 폭. 뒤로 갈수록 빠르고 좁아요.
+  const PLANTS = [
+    { x: 0.19, rate: 0.55, zw: 0.100 },
+    { x: 0.44, rate: 0.68, zw: 0.085 },
+    { x: 0.69, rate: 0.82, zw: 0.075 }
+  ];
+  const DISPLAY = '"Jua", "Gowun Dodum", sans-serif';
+
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  const pipsEl = document.getElementById('pips');
+  const leftEl = document.getElementById('left');
+  const ov = document.getElementById('ov');
+  const ovTag = document.getElementById('ovTag');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovMsg = document.getElementById('ovMsg');
+  const againBtn = document.getElementById('again');
+  const quizCard = document.getElementById('quizCard');
+  const endCard = document.getElementById('endCard');
+  const stampCard = document.getElementById('stampCard');
+  const again2 = document.getElementById('again2');
+  const ansO = document.getElementById('ansO');
+  const ansX = document.getElementById('ansX');
+
+  // 성공했을 때 나오는 O/X 퀴즈. answer가 true면 O, false면 X가 정답이다.
+  const QUIZ = {
+    q: "장안면 노진리의 옛 지명인 '갈우물'은 갈대와 우물이라는 말이 합쳐진 이름이다.",
+    answer: true,
+    note: "'갈우물'은 갈대와 우물이 합쳐진 이름이에요."
+  };
+  document.getElementById('quizQ').textContent = QUIZ.q;
+  const pullBtn = document.getElementById('pull');
+
+  for (let i = 0; i < NEED; i++) { const s = document.createElement('span'); s.className = 'pip'; pipsEl.appendChild(s); }
+
+  let size = 0, dpr = 1, bg = null;
+  let state, hits, left, plants, cur, g, zs, ze, tp, ph, ph2, res, particles, pops, lastT, t, endTimer;
+
+  const rnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+
+  /* ---------- 배경 (한 번만 그려 두는 논 풍경) ---------- */
+  function hill(b, s, base, amp, color, f, p) {
+    b.beginPath();
+    b.moveTo(0, s * 0.37);
+    for (let x = 0; x <= s; x += 4) {
+      b.lineTo(x, s * base - s * amp * (0.6 * Math.sin(x / s * f * 3 + p) + 0.4 * Math.sin(x / s * f * 8 + p * 2)));
+    }
+    b.lineTo(s, s * 0.37);
+    b.closePath();
+    b.fillStyle = color;
+    b.fill();
+  }
+
+  function tuft(b, x, y, h, col, w) {
+    b.strokeStyle = col; b.lineWidth = w; b.lineCap = 'round';
+    b.beginPath();
+    b.moveTo(x, y); b.lineTo(x - h * 0.4, y - h * 0.9);
+    b.moveTo(x, y); b.lineTo(x, y - h);
+    b.moveTo(x, y); b.lineTo(x + h * 0.4, y - h * 0.85);
+    b.stroke();
+  }
+
+  function buildBg() {
+    bg = document.createElement('canvas');
+    bg.width = cv.width; bg.height = cv.height;
+    const b = bg.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const s = size, H = 0.37 * s;
+
+    let gr = b.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, '#9fd0e6'); gr.addColorStop(1, '#e9f2d8');
+    b.fillStyle = gr; b.fillRect(0, 0, s, H + 1);
+
+    gr = b.createRadialGradient(0.8 * s, 0.1 * s, 0, 0.8 * s, 0.1 * s, 0.17 * s);
+    gr.addColorStop(0, 'rgba(255,248,214,.95)'); gr.addColorStop(1, 'rgba(255,248,214,0)');
+    b.fillStyle = gr; b.fillRect(0, 0, s, H);
+
+    b.fillStyle = 'rgba(255,255,255,.7)';
+    [[0.18, 0.09, 0.09, 0.022], [0.27, 0.105, 0.07, 0.018], [0.52, 0.06, 0.1, 0.02], [0.6, 0.075, 0.06, 0.016]].forEach(c => {
+      b.beginPath(); b.ellipse(c[0] * s, c[1] * s, c[2] * s, c[3] * s, 0, 0, Math.PI * 2); b.fill();
+    });
+
+    hill(b, s, 0.30, 0.07, '#a9c8b4', 1.3, 0.4);
+    hill(b, s, 0.35, 0.05, '#7fae95', 2.1, 1.2);
+
+    gr = b.createLinearGradient(0, 0.36 * s, 0, 0.54 * s);
+    gr.addColorStop(0, '#9ccb6c'); gr.addColorStop(1, '#5f9d47');
+    b.fillStyle = gr; b.fillRect(0, 0.36 * s, s, 0.19 * s);
+
+    for (let r = 0; r < 9; r++) {
+      const u = r / 8;
+      const y = s * (0.385 + 0.15 * Math.pow(u, 1.35));
+      const h = s * (0.02 + 0.05 * u);
+      const step = s * (0.022 + 0.03 * u);
+      const col = u < 0.5 ? '#7d9448' : '#62803b';
+      for (let x = -step * rnd(r) * 0.5, n = 0; x < s + step; x += step, n++) {
+        const j = (rnd(r * 91 + n * 7) - 0.5) * step * 0.4;
+        tuft(b, x + j, y, h * (0.85 + rnd(n + r * 13) * 0.3), col, Math.max(1, 0.0042 * s * (0.6 + u)));
+      }
+    }
+
+    gr = b.createLinearGradient(0, 0.54 * s, 0, s);
+    gr.addColorStop(0, '#bccdb3'); gr.addColorStop(0.25, '#8d8c64'); gr.addColorStop(1, '#52432a');
+    b.fillStyle = gr; b.fillRect(0, 0.54 * s, s, 0.46 * s + 1);
+    b.fillStyle = '#4b6b3a'; b.fillRect(0, 0.535 * s, s, 0.012 * s);
+
+    b.strokeStyle = 'rgba(255,255,255,.17)'; b.lineCap = 'round';
+    for (let i = 0; i < 46; i++) {
+      const u = rnd(i * 5 + 1);
+      const y = s * (0.56 + 0.42 * u * u);
+      const len = s * (0.03 + 0.09 * rnd(i * 3 + 2));
+      const x = s * rnd(i * 11 + 4);
+      b.lineWidth = Math.max(1, 0.003 * s * (0.5 + u));
+      b.beginPath(); b.moveTo(x, y); b.lineTo(x + len, y); b.stroke();
+    }
+  }
+
+  /* ---------- 상태 ---------- */
+  function fit() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    size = cv.clientWidth || 400;
+    cv.width = Math.round(size * dpr);
+    cv.height = Math.round(size * dpr);
+    buildBg();
+  }
+
+  function updateHud() {
+    [...pipsEl.children].forEach((p, i) => p.classList.toggle('on', i < hits));
+    pipsEl.setAttribute('aria-label', '뽑은 갈대 ' + hits + ' / ' + NEED);
+    leftEl.textContent = left;
+  }
+
+  function nextAttempt() {
+    cur = plants.findIndex(p => !p.pulled);
+    const c = plants[cur].cfg;
+    zs = 0.30 + Math.random() * 0.44;
+    ze = zs + c.zw;
+    g = 0;
+    state = 'idle';
+  }
+
+  function reset() {
+    clearTimeout(endTimer);
+    plants = PLANTS.map((c, i) => ({ x: c.x, cfg: c, pulled: false, lift: 0, damage: 0, seed: i * 17 + 3 }));
+    hits = 0; left = CHANCES; particles = []; pops = []; res = null; t = 0;
+    ov.hidden = true;
+    quizCard.hidden = true;
+    stampCard.hidden = true;
+    endCard.hidden = false;
+    pullBtn.classList.remove('hold');
+    updateHud();
+    nextAttempt();
+  }
+
+  function pop(x, text, sub, color) {
+    pops.push({ x: x, t0: performance.now(), text: text, sub: sub, color: color });
+  }
+
+  function spawn(kind, x, y, n, now) {
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        kind: kind, x: x + (rnd(i + 5) - 0.5) * 0.08 * size, y: y,
+        vx: (Math.random() - 0.5) * 0.45 * size,
+        vy: kind === 'leaf' ? -(0.1 + Math.random() * 0.3) * size : (Math.random() * 0.12 - 0.02) * size,
+        r: (0.006 + Math.random() * 0.006) * size, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 12,
+        t0: now, life: kind === 'leaf' ? 1100 : 900
+      });
+    }
+  }
+
+  /* ---------- 당기기 흐름 ---------- */
+  function advance(now) {
+    const dt = Math.max(0, Math.min((now - lastT) / 1000, 0.05));
+    lastT = Math.max(lastT, now);
+    t += dt;
+    if (state === 'pulling') {
+      tp += dt;
+      const f = 1 + 0.28 * Math.sin(tp * 5.3 + ph) + 0.18 * Math.sin(tp * 11.7 + ph2);
+      g += plants[cur].cfg.rate * f * dt;
+      if (g >= ze) { g = ze; snap(now); }
+    }
+    return dt;
+  }
+
+  function startPull() {
+    if (state !== 'idle') return;
+    state = 'pulling';
+    g = 0; tp = 0; ph = Math.random() * 6.28; ph2 = Math.random() * 6.28;
+    left--;
+    updateHud();
+    pullBtn.classList.add('hold');
+  }
+
+  function releasePull() {
+    pullBtn.classList.remove('hold');
+    if (state !== 'pulling') return;
+    advance(performance.now());
+    if (state !== 'pulling') return;
+    if (g >= zs && g <= ze) win(); else early();
+  }
+
+  function win() {
+    const p = plants[cur], now = performance.now();
+    res = { kind: 'win', t0: now, from: p.lift, dur: 1150, idx: cur };
+    state = 'result';
+    hits++;
+    spawn('mud', p.x * size, YB * size - p.lift * size + 0.06 * size, 16, now);
+    pop(p.x, '뽑았다!', '', '#9be15d');
+    updateHud();
+  }
+
+  function early() {
+    const p = plants[cur], now = performance.now();
+    res = { kind: 'early', t0: now, from: p.lift, dur: 800, idx: cur };
+    state = 'result';
+    pop(p.x, '덜 당겼어요', '뿌리가 아직 버텨요', '#f1ead6');
+  }
+
+  function snap(now) {
+    const p = plants[cur];
+    res = { kind: 'snap', t0: now, from: p.lift, dur: 900, idx: cur };
+    state = 'result';
+    p.damage = Math.min(p.damage + 1, 3);
+    spawn('leaf', p.x * size, YB * size - p.lift * size - 0.12 * size, 12, now);
+    pop(p.x, '줄기가 끊어졌어요', '조금 일찍 놓아요', '#ff8a70');
+    p.lift = 0;
+    pullBtn.classList.remove('hold');
+  }
+
+  function endResult() {
+    const p = plants[res.idx];
+    if (res.kind === 'win') { p.pulled = true; p.lift = 0; }
+    res = null;
+    if (hits >= NEED) finish(true);
+    else if (left === 0 || hits + left < NEED) finish(false);
+    else nextAttempt();
+  }
+
+  function finish(win) {
+    state = 'over';
+    endTimer = setTimeout(() => {
+      if (win) { showQuiz(); return; }
+      ovTag.textContent = 'TRY AGAIN';
+      ovTitle.textContent = '아쉬워요';
+      ovMsg.textContent = CHANCES + '번 중 ' + hits + '대를 뽑았어요.';
+      ov.hidden = false;
+      againBtn.focus();
+    }, 500);
+  }
+
+  /* ---------- 그리기 ---------- */
+  function blade(x, y, ang, len, curv, w, color) {
+    const tx = x + Math.sin(ang) * len, ty = y - Math.cos(ang) * len;
+    const cx = x + Math.sin(ang) * len * 0.45 + curv * len * 0.3, cy = y - Math.cos(ang) * len * 0.65;
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y);
+    ctx.quadraticCurveTo(cx - w * 0.3, cy, tx, ty);
+    ctx.quadraticCurveTo(cx + w * 0.3, cy, x + w / 2, y);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    return { x: tx, y: ty };
+  }
+
+  // 갈대 꼭대기의 솜털 이삭: 줄기 끝에서 위쪽으로 부드럽게 퍼진다.
+  function plume(x, y, ang) {
+    const s = size, L = 0.115 * s, W = 0.036 * s;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang + Math.sin(t * 2 + x * 0.05) * 0.05);
+    ctx.fillStyle = 'rgba(205,188,196,.5)';
+    ctx.beginPath(); ctx.ellipse(0, -L * 0.48, W * 0.5, L * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1, 0.0034 * s);
+    for (let i = 0; i < 20; i++) {
+      const u = i / 19, by = -L * (0.04 + 0.9 * u);
+      const reach = W * Math.sin(Math.PI * (0.12 + 0.8 * u)) * 0.95;
+      ctx.strokeStyle = i % 2 ? '#e4d6c8' : '#b9a393';
+      for (const d of [-1, 1]) {
+        ctx.beginPath(); ctx.moveTo(0, by);
+        ctx.quadraticCurveTo(d * reach * 0.6, by - L * 0.03, d * reach, by - L * 0.1);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawRoots(x, y, k) {
+    const s = size;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, s, YB * s + 2); ctx.clip();
+    ctx.strokeStyle = '#d6c394'; ctx.lineWidth = Math.max(1, 0.0036 * s); ctx.lineCap = 'round';
+    for (let r = 0; r < 18; r++) {
+      const u = r / 17 - 0.5, L = s * (0.07 + 0.07 * rnd(r + k * 31));
+      ctx.beginPath();
+      ctx.moveTo(x + u * 0.03 * s, y + 0.01 * s);
+      ctx.bezierCurveTo(x + u * 0.09 * s, y + L * 0.4, x + u * 0.14 * s + (rnd(r + 9) - 0.5) * 0.03 * s, y + L * 0.7, x + u * 0.12 * s + (rnd(r + 3) - 0.5) * 0.05 * s, y + L);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#3f3220';
+    ctx.beginPath(); ctx.ellipse(x, y + 0.035 * s, 0.05 * s, 0.032 * s, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHole(p) {
+    const s = size, x = p.x * s, y = YB * s;
+    ctx.fillStyle = 'rgba(50,38,22,.6)';
+    ctx.beginPath(); ctx.ellipse(x, y + 0.004 * s, 0.065 * s, 0.015 * s, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(x, y + 0.004 * s, 0.09 * s, 0.021 * s, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  function plantShake(i, now) {
+    const s = size;
+    if (state === 'pulling' && i === cur) return Math.sin(t * 38) * 0.006 * s * Math.min(g * 3, 1.4);
+    if (res && res.kind === 'snap' && res.idx === i) {
+      const q = Math.max(0, now - res.t0);
+      return Math.sin(q * 0.08) * 0.01 * s * Math.max(0, 1 - q / 500);
+    }
+    return 0;
+  }
+
+  function drawPlant(p, i, now) {
+    const s = size;
+    const x = p.x * s + plantShake(i, now), y = YB * s - p.lift * s;
+    let alpha = 1;
+    if (res && res.kind === 'win' && res.idx === i) alpha = clamp((res.dur - Math.max(0, now - res.t0)) / 350, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    if (p.lift > 0.004) drawRoots(x, y, i);
+
+    ctx.fillStyle = 'rgba(120,118,86,.5)';
+    ctx.beginPath(); ctx.ellipse(p.x * s, YB * s + 0.004 * s, 0.075 * s, 0.017 * s, 0, 0, Math.PI * 2); ctx.fill();
+    const ring = 0.075 + Math.min(p.lift * 0.6, 0.06) + 0.004 * Math.sin(t * 2 + i);
+    ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(p.x * s, YB * s + 0.004 * s, ring * s, ring * 0.23 * s, 0, 0, Math.PI * 2); ctx.stroke();
+
+    const tension = (state === 'pulling' && i === cur) ? g : 0;
+    const greens = ['#6f9448', '#8aa65a', '#587a3c'];
+    ctx.fillStyle = '#cfc995';
+    ctx.fillRect(x - 0.026 * s, y - 0.045 * s, 0.052 * s, 0.05 * s);
+    const plumeIdx = [1, 4, 7];
+    for (let k = 0; k < 9; k++) {
+      let ang = ((k / 8) - 0.5) * 1.3 + (rnd(p.seed + k) - 0.5) * 0.22;
+      ang = ang * (1 - 0.3 * tension) + Math.sin(t * 1.4 + k * 1.7 + p.seed) * 0.025;
+      const isPlume = plumeIdx.indexOf(k) >= 0;
+      const len = (0.27 + rnd(p.seed + k * 3) * 0.07) * s * (1 - 0.13 * p.damage) * (isPlume ? 1.06 : 1);
+      const tip = blade(x, y - 0.02 * s, ang, len, rnd(p.seed + k * 5) - 0.5, (isPlume ? 0.010 : 0.020) * s, isPlume ? '#8c8a4f' : greens[k % 3]);
+      if (isPlume && p.damage < 2) plume(tip.x, tip.y, ang);
+    }
+    ctx.restore();
+  }
+
+  function drawHand(x, hy, alpha) {
+    const s = size;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineCap = 'round';
+    const ax = x + 0.07 * s, ay = 1.08 * s, bx = x + 0.01 * s, by = hy + 0.035 * s;
+    ctx.strokeStyle = '#e0ad86'; ctx.lineWidth = 0.062 * s;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.strokeStyle = '#476a85'; ctx.lineWidth = 0.074 * s;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * 0.55, ay + (by - ay) * 0.55); ctx.stroke();
+    ctx.fillStyle = '#e8b891'; ctx.strokeStyle = '#a8714f'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(x, hy, 0.046 * s, 0.03 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    [-0.014, 0, 0.014].forEach(d => { ctx.moveTo(x + d * s, hy - 0.016 * s); ctx.lineTo(x + d * s, hy + 0.018 * s); });
+    ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x - 0.04 * s, hy + 0.012 * s, 0.016 * s, 0.026 * s, 0.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawGauge() {
+    const s = size, gx = s * 0.925, w = s * 0.056, yT = s * 0.14, yB = s * 0.86;
+    const Y = v => yB - (yB - yT) * v;
+    const inZone = state === 'pulling' && g >= zs && g <= ze;
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,16,10,.78)';
+    rr(gx - w / 2, yT, w, yB - yT, w / 2); ctx.fill();
+    ctx.save();
+    rr(gx - w / 2, yT, w, yB - yT, w / 2); ctx.clip();
+    ctx.fillStyle = 'rgba(255,255,255,.13)'; ctx.fillRect(gx - w / 2, Y(zs), w, yB - Y(zs));
+    ctx.fillStyle = inZone ? '#c4f58a' : '#7cc04a'; ctx.fillRect(gx - w / 2, Y(ze), w, Y(zs) - Y(ze));
+    ctx.fillStyle = 'rgba(214,69,47,.7)'; ctx.fillRect(gx - w / 2, yT, w, Y(ze) - yT);
+    ctx.fillStyle = '#f0c24a'; ctx.fillRect(gx - w * 0.14, Y(g), w * 0.28, yB - Y(g));
+    ctx.restore();
+    ctx.strokeStyle = '#efe6cc'; ctx.lineWidth = 1.5;
+    rr(gx - w / 2, yT, w, yB - yT, w / 2); ctx.stroke();
+    const ny = Y(g);
+    ctx.strokeStyle = '#fff7da'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(gx - w / 2 - 0.012 * s, ny); ctx.lineTo(gx + w / 2 + 0.012 * s, ny); ctx.stroke();
+    ctx.fillStyle = '#fff7da';
+    ctx.beginPath(); ctx.moveTo(gx - w / 2 - 0.045 * s, ny - 0.014 * s); ctx.lineTo(gx - w / 2 - 0.045 * s, ny + 0.014 * s); ctx.lineTo(gx - w / 2 - 0.012 * s, ny); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFx(now, dt) {
+    particles = particles.filter(p => now - p.t0 < p.life);
+    particles.forEach(p => {
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 1.6 * size * dt; p.rot += p.vr * dt;
+      const a = 1 - (now - p.t0) / p.life;
+      ctx.save();
+      ctx.globalAlpha = clamp(a * 1.5, 0, 1);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      if (p.kind === 'mud') {
+        ctx.fillStyle = '#5a4630';
+        ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = '#4f9a3c';
+        ctx.fillRect(-p.r * 2, -p.r * 0.6, p.r * 4, p.r * 1.2);
+      }
+      ctx.restore();
+    });
+    pops = pops.filter(p => now - p.t0 < 1100);
+    pops.forEach(p => {
+      const q = Math.max(0, now - p.t0) / 1100;
+      const x = clamp(p.x * size, size * 0.2, size * 0.7);
+      const y = size * 0.14 - q * size * 0.04;
+      ctx.save();
+      ctx.globalAlpha = q < 0.7 ? 1 : 1 - (q - 0.7) / 0.3;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(20,14,8,.92)'; ctx.lineWidth = size * 0.012;
+      ctx.font = '400 ' + (size * 0.062) + 'px ' + DISPLAY;
+      ctx.strokeText(p.text, x, y); ctx.fillStyle = p.color; ctx.fillText(p.text, x, y);
+      if (p.sub) {
+        ctx.font = '400 ' + (size * 0.036) + 'px ' + DISPLAY;
+        ctx.lineWidth = size * 0.009;
+        ctx.strokeText(p.sub, x, y + size * 0.055); ctx.fillStyle = '#f1ead6'; ctx.fillText(p.sub, x, y + size * 0.055);
+      }
+      ctx.restore();
+    });
+  }
+
+  function updateLift(now) {
+    if (state === 'pulling') {
+      plants[cur].lift = g * LIFT;
+    } else if (state === 'result' && res) {
+      const p = plants[res.idx], q = Math.max(0, now - res.t0);
+      if (res.kind === 'win') {
+        const k = Math.min(q / 450, 1);
+        p.lift = res.from + (WIN_LIFT - res.from) * (1 - Math.pow(1 - k, 3));
+      } else if (res.kind === 'early') {
+        const k = Math.min(q / 380, 1);
+        p.lift = res.from * (1 - k * k);
+      } else {
+        p.lift = 0;
+      }
+    }
+  }
+
+  function render(now, dt) {
+    const s = size;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, s, s);
+    if (bg) ctx.drawImage(bg, 0, 0, s, s);
+
+    plants.forEach((p, i) => { if (p.pulled) drawHole(p); else drawPlant(p, i, now); });
+
+    if (state !== 'over') {
+      const idx = (state === 'result' && res) ? res.idx : cur;
+      const p = plants[idx];
+      if (p && !p.pulled || (res && res.kind === 'win' && res.idx === idx)) {
+        let hy = YB * s - p.lift * s - 0.035 * s;
+        let a = 1;
+        if (state === 'idle') hy += Math.sin(t * 2.2) * 0.004 * s;
+        if (res && res.idx === idx) {
+          const q = Math.max(0, now - res.t0);
+          if (res.kind === 'snap') hy -= 0.06 * s * Math.max(0, 1 - q / 250);
+          if (res.kind === 'win') a = clamp((res.dur - q) / 350, 0, 1);
+        }
+        drawHand(p.x * s + plantShake(idx, now) * 0.6, hy, a);
+      }
+    }
+
+    drawFx(now, dt);
+    drawGauge();
+  }
+
+  function frame(now) {
+    const dt = advance(now);
+    if (state === 'result' && res && now - res.t0 >= res.dur) endResult();
+    updateLift(now);
+    render(now, dt);
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 입력: 꾹 눌러 당기고, 놓으면 확인 ---------- */
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); startPull(); });
+  pullBtn.addEventListener('pointerdown', e => { e.preventDefault(); startPull(); });
+  window.addEventListener('pointerup', releasePull);
+  window.addEventListener('pointercancel', releasePull);
+  window.addEventListener('blur', releasePull);
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  pullBtn.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ---------- 성공 후 O/X 퀴즈 ---------- */
+  function showQuiz() {
+    endCard.hidden = true;
+    stampCard.hidden = true;
+    quizCard.hidden = false;
+    ov.hidden = false;
+    ansO.focus();
+  }
+  function answer(choice) {
+    if (quizCard.hidden) return;
+    const ok = choice === QUIZ.answer;
+    quizCard.hidden = true;
+    if (ok) {            // 정답이면 결과창 대신 합격 도장이 찍힌다
+      stampCard.hidden = false;
+      again2.focus();
+      return;
+    }
+    endCard.hidden = false;
+    ovTag.textContent = 'SUCCESS · 오답';
+    ovTitle.textContent = '정답은 ' + (QUIZ.answer ? 'O' : 'X') + '예요';
+    ovMsg.textContent = QUIZ.note + '\n갈대 3대를 ' + (CHANCES - left) + '번 만에 뽑았어요.';
+    againBtn.focus();
+  }
+  ansO.addEventListener('click', () => answer(true));
+  ansX.addEventListener('click', () => answer(false));
+  document.addEventListener('keydown', e => {
+    if (quizCard.hidden || ov.hidden) return;
+    if (e.code === 'KeyO') answer(true);
+    else if (e.code === 'KeyX') answer(false);
+  });
+  againBtn.addEventListener('click', reset);
+  again2.addEventListener('click', reset);
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || !ov.hidden) return;
+    e.preventDefault();
+    if (!e.repeat) startPull();
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code !== 'Space' || !ov.hidden) return;
+    e.preventDefault();
+    releasePull();
+  });
+  window.addEventListener('resize', fit);
+
+  fit();
+  lastT = performance.now();
+  reset();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

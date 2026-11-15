@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>화성시 장안면 수촌리 - 지명 역사 꽃 피우기 게임</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Jua&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #fffacd 50%, #ffe4e1 100%);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-batang {
+            font-family: 'Gowun Batang', serif;
+        }
+
+        /* Custom Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        @keyframes bloom-burst {
+            0% { transform: scale(0.6) rotate(-10deg); opacity: 0.5; }
+            50% { transform: scale(1.35) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1.15) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes stamp-animation {
+            0% { transform: scale(3.5) rotate(-20deg); opacity: 0; }
+            80% { transform: scale(0.9) rotate(-12deg); opacity: 0.95; }
+            100% { transform: scale(1) rotate(-10deg); opacity: 1; }
+        }
+
+        /* Water Bucket Pouring Animation */
+        @keyframes pour-water {
+            0% { transform: translate(30px, -20px) rotate(0deg); opacity: 0; }
+            30% { opacity: 1; transform: translate(15px, -10px) rotate(-35deg); }
+            70% { opacity: 1; transform: translate(15px, -10px) rotate(-45deg); }
+            100% { transform: translate(30px, -20px) rotate(0deg); opacity: 0; }
+        }
+
+        @keyframes water-drop-fall {
+            0% { transform: translateY(-10px) scale(0.6); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(45px) scale(1); opacity: 0; }
+        }
+
+        .animate-pour {
+            animation: pour-water 0.8s ease-in-out forwards;
+        }
+
+        .animate-drop-1 { animation: water-drop-fall 0.6s ease-in 0.15s infinite; }
+        .animate-drop-2 { animation: water-drop-fall 0.6s ease-in 0.25s infinite; }
+        .animate-drop-3 { animation: water-drop-fall 0.6s ease-in 0.35s infinite; }
+
+        .animate-float {
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        .animate-pulse-soft {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+
+        .animate-bloom {
+            animation: bloom-burst 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .animate-stamp {
+            animation: stamp-animation 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Canvas background styling */
+        #petalCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Pretty Timing Bar Zone Backgrounds */
+        .timing-bar {
+            background: linear-gradient(90deg, 
+                #fca5a5 0%, #fca5a5 20%, 
+                #fef08a 20%, #fef08a 40%, 
+                #86efac 40%, #86efac 60%, 
+                #fef08a 60%, #fef08a 80%, 
+                #fca5a5 80%, #fca5a5 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 relative overflow-hidden text-slate-700">
+
+    <!-- Petal Canvas for Celebration -->
+    <canvas id="petalCanvas"></canvas>
+
+    <!-- Start Guide Modal / Overlay -->
+    <div id="guideModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white border-4 border-pink-300 rounded-3xl p-5 max-w-sm w-full shadow-2xl text-center relative animate-float">
+            <div class="text-4xl mb-2">🌸</div>
+            <h2 class="text-xl font-extrabold text-pink-900 mb-1">수촌리 꽃 피우기 안내</h2>
+            <p class="text-xs text-slate-500 font-batang mb-4">화성시 장안면 수촌리의 꽃밭 역사를 배워봅시다!</p>
+
+            <div class="bg-pink-50 border border-pink-200 rounded-2xl p-3 text-xs text-left space-y-2 mb-4 font-batang">
+                <div class="font-bold text-slate-700 mb-1 border-b border-pink-200 pb-1 flex items-center gap-1">
+                    <span>💧</span> 물주기 게이지 맞추기
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-emerald-500 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">🟢 초록구역</span>
+                    <span class="text-emerald-700 font-bold">적정량 (+25%) Perfect!</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-amber-400 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">🟡 노란구역</span>
+                    <span class="text-amber-700">보통 (+10%)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-rose-400 text-white font-bold px-1.5 py-0.5 rounded text-[10px]">🔴 빨간구역</span>
+                    <span class="text-rose-600">과다 수분 (-10%) 주의!</span>
+                </div>
+                <p class="pt-1 text-[11px] text-slate-600">
+                    게이지 100%를 채우면 <b>수촌리 역사 퀴즈</b>가 나오고, 정답을 맞히면 화려한 꽃이 피어납니다!
+                </p>
+            </div>
+
+            <button onclick="closeGuideAndStart()" class="w-full py-3 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold text-base rounded-xl shadow-md border-b-4 border-rose-500 active:scale-95 transition-all">
+                탐험 시작하기 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-md bg-white/85 backdrop-blur-md border-4 border-pink-200 rounded-3xl shadow-xl overflow-hidden flex flex-col relative z-10 transition-all duration-500">
+        
+        <!-- Header / Banner -->
+        <header class="bg-gradient-to-r from-pink-400 via-rose-300 to-amber-200 text-white p-4 text-center shadow-sm relative overflow-hidden">
+            <div class="absolute -right-2 -bottom-3 opacity-30 text-6xl text-white">
+                <i class="fa-solid fa-fan"></i>
+            </div>
+            <span class="bg-white/80 text-pink-600 text-xs px-3 py-1 rounded-full uppercase tracking-wider font-bold inline-block mb-1 shadow-sm">
+                🌸 화성시 장안면 수촌리
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-wide drop-shadow-sm text-pink-900">
+                꽃밭 역사 탐험
+            </h1>
+        </header>
+
+        <!-- Main Play Area -->
+        <section class="p-5 flex-1 flex flex-col items-center justify-between min-h-[500px] relative">
+            
+            <!-- STAGE 1: WATERING GAME -->
+            <div id="stageWatering" class="w-full flex flex-col items-center flex-1 justify-between transition-opacity duration-300">
+                
+                <!-- Notice Badge -->
+                <div class="text-center mb-1">
+                    <p class="text-pink-700 text-xs sm:text-sm bg-pink-100/90 px-4 py-1.5 rounded-full border border-pink-200 font-batang inline-block shadow-sm">
+                        💧 타이밍에 맞춰 바가지로 물을 주세요!
+                    </p>
+                </div>
+
+                <!-- Flower Display Garden Pad -->
+                <div id="gardenArea" class="w-full h-64 rounded-3xl bg-gradient-to-b from-pink-50 via-amber-50/50 to-rose-100/60 border-2 border-pink-200 flex flex-col items-center justify-end relative overflow-hidden shadow-inner my-1 transition-all duration-700">
+                    
+                    <!-- Water Bucket (바가지) Pouring Animation Graphic -->
+                    <div id="bucketContainer" class="absolute top-4 right-10 z-20 pointer-events-none opacity-0 transition-opacity">
+                        <!-- Bucket Graphic -->
+                        <div id="bucketIcon" class="text-5xl text-amber-600 drop-shadow-md transform origin-bottom-right">
+                            <i class="fa-solid fa-bucket"></i>
+                        </div>
+                        <!-- Water Drops Pouring Stream -->
+                        <div id="waterStream" class="absolute -left-3 top-8 flex gap-1 text-sky-400 text-lg opacity-0">
+                            <i class="fa-solid fa-droplet animate-drop-1"></i>
+                            <i class="fa-solid fa-droplet animate-drop-2"></i>
+                            <i class="fa-solid fa-droplet animate-drop-3"></i>
+                        </div>
+                    </div>
+
+                    <!-- Background Deco Elements (Activates on blooming) -->
+                    <div id="bgDecorations" class="absolute inset-0 opacity-0 transition-opacity duration-1000 pointer-events-none">
+                        <span class="absolute left-3 bottom-16 text-2xl animate-bounce">🌺</span>
+                        <span class="absolute right-4 bottom-16 text-3xl animate-bounce" style="animation-delay: 0.3s;">🌸</span>
+                        <span class="absolute left-8 top-8 text-2xl animate-float">🦋</span>
+                        <span class="absolute right-10 top-12 text-xl animate-float" style="animation-delay: 0.5s;">🐝</span>
+                        <span class="absolute left-1/4 bottom-16 text-2xl">🌷</span>
+                        <span class="absolute right-1/4 bottom-16 text-2xl">🌼</span>
+                    </div>
+
+                    <!-- Visual Flower Graphic Container -->
+                    <div id="flowerContainer" class="relative bottom-0 flex flex-col items-center justify-end transition-all duration-500 transform origin-bottom z-10">
+                        <!-- Dynamic Detailed SVG Flower -->
+                        <div id="flowerGraphic" class="transition-all duration-500 transform">
+                            <!-- SVG Rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Wider Soft Pastel Soil Mount (넓고 안락한 화단 흙) -->
+                    <div class="w-full h-12 bg-gradient-to-r from-amber-200 via-amber-300 to-amber-200 rounded-t-3xl border-t-4 border-amber-400/70 shadow-md flex justify-center items-center">
+                    </div>
+                </div>
+
+                <!-- Growth Progress Bar -->
+                <div class="w-full my-1">
+                    <div class="flex justify-between text-xs sm:text-sm font-bold text-pink-700 mb-1 px-1">
+                        <span>🌱 꽃 봉오리 성장</span>
+                        <span id="growthPercentText" class="text-pink-600 font-extrabold">0%</span>
+                    </div>
+                    <div class="w-full h-4 bg-pink-100 rounded-full overflow-hidden border border-pink-200 p-0.5 shadow-inner">
+                        <div id="growthProgressBar" class="h-full bg-gradient-to-r from-pink-300 via-rose-400 to-pink-500 rounded-full transition-all duration-300 w-0"></div>
+                    </div>
+                </div>
+
+                <!-- Timing Gauge Bar -->
+                <div class="w-full bg-white/90 p-3 rounded-2xl border border-pink-100 shadow-sm mt-1">
+                    <div class="text-center text-xs text-slate-500 mb-1.5 flex justify-center items-center gap-2">
+                        <span class="text-rose-400 font-bold">🔴 과다</span>
+                        <span class="text-amber-500 font-bold">🟡 보통</span>
+                        <span class="text-emerald-500 font-bold">🟢 적정(Perfect)</span>
+                        <span class="text-amber-500 font-bold">🟡 보통</span>
+                        <span class="text-rose-400 font-bold">🔴 과다</span>
+                    </div>
+                    
+                    <!-- Timing Track -->
+                    <div class="relative w-full h-7 rounded-xl timing-bar border border-pink-200 overflow-hidden shadow-inner">
+                        <!-- Pointer -->
+                        <div id="timingPointer" class="absolute top-0 bottom-0 w-3 bg-rose-500 border-2 border-white rounded-full shadow-md transform -translate-x-1/2 left-0 transition-none"></div>
+                    </div>
+
+                    <!-- Water Button -->
+                    <button id="waterBtn" onclick="handleWaterClick()" class="w-full mt-3 py-3 bg-gradient-to-r from-pink-400 via-rose-400 to-amber-300 hover:from-pink-500 hover:to-rose-500 active:scale-95 text-white text-lg font-bold rounded-xl shadow-md border-b-4 border-rose-400 flex items-center justify-center gap-2 transition-transform">
+                        <i class="fa-solid fa-bucket"></i> 바가지로 물주기!
+                    </button>
+                </div>
+            </div>
+
+            <!-- STAGE 2: HISTORICAL QUIZ -->
+            <div id="stageQuiz" class="w-full flex-col items-center flex-1 justify-between hidden transition-opacity duration-300">
+                <div class="w-full bg-pink-50/90 border-2 border-pink-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="bg-pink-400 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">역사 퀴즈</span>
+                        <span class="text-xs text-pink-700 font-batang">수촌리 지명 이야기</span>
+                    </div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800 leading-snug mb-3">
+                        🌸 옛날 이 마을에는 아름다운 꽃나무가 가득하여 붙여진 특별한 이름이 있습니다.<br/>
+                        <span class="text-rose-600 underline underline-offset-4">화성시 장안면 수촌리(水村里)</span>의 옛 지명은 무엇일까요?
+                    </h2>
+                    <p class="text-xs text-slate-500 font-batang bg-white/90 p-2 rounded-lg border border-pink-100">
+                        💡 <b>힌트:</b> '수촌'은 꽃과 나무, 물골이 조화로운 우리말 '꽃밭' 또는 '숲말'에서 유래되었습니다.
+                    </p>
+                </div>
+
+                <!-- Quiz Options -->
+                <div id="quizOptions" class="w-full space-y-2.5 my-3">
+                    <!-- Options injected via JavaScript -->
+                </div>
+
+                <!-- Quiz Feedback Toast -->
+                <div id="quizFeedback" class="h-7 text-center font-bold text-xs sm:text-sm"></div>
+            </div>
+
+            <!-- STAGE 3: SUCCESS & BIG BLOOMING STAMP -->
+            <div id="stageSuccess" class="w-full flex-col items-center justify-center flex-1 hidden text-center relative py-2">
+                
+                <div class="animate-bounce text-pink-600 text-sm font-bold mb-1">
+                    ✨ 미션 완수! 탐구 성공!
+                </div>
+                
+                <h2 class="text-xl sm:text-2xl font-extrabold text-pink-900 mb-2">
+                    주변이 이쁜 꽃밭으로 변했습니다! 🌸
+                </h2>
+
+                <p class="text-xs sm:text-sm text-slate-600 font-batang mb-3 max-w-xs mx-auto">
+                    꽃나무가 만개한 화성시 장안면 수촌리의 아름다운 지명 역사를 바르게 배웠습니다!
+                </p>
+
+                <!-- Huge Blooming Flower Showcase -->
+                <div class="w-48 h-48 mx-auto relative flex items-center justify-center bg-gradient-to-tr from-pink-100 via-rose-50 to-amber-100 rounded-full border-4 border-pink-200 shadow-xl my-2 overflow-hidden">
+                    <!-- Giant Bloom SVG Visual -->
+                    <div id="giantBloomGraphic" class="animate-bloom">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Passed Stamp Overlay -->
+                <div id="stampWrapper" class="absolute inset-0 flex items-center justify-center pointer-events-none z-30 opacity-0">
+                    <div class="w-48 h-48 rounded-full border-8 border-double border-rose-500 text-rose-600 flex flex-col items-center justify-center transform -rotate-12 bg-white/60 backdrop-blur-[2px] shadow-2xl p-2 animate-stamp">
+                        <div class="border-2 border-dashed border-rose-500 rounded-full w-full h-full flex flex-col items-center justify-center p-2">
+                            <span class="text-xs font-bold tracking-widest uppercase text-rose-500">화성 장안 수촌</span>
+                            <span class="text-2xl font-black tracking-tight my-1 text-rose-600">합격하셨습니다</span>
+                            <div class="flex items-center gap-1 text-xs">
+                                <span>🌸</span>
+                                <span>꽃밭 지명 탐구</span>
+                                <span>🌸</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Restart Button -->
+                <button onclick="resetGame()" class="mt-4 px-6 py-2.5 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold rounded-xl shadow-md border-b-4 border-rose-500 active:scale-95 transition-all flex items-center gap-2 mx-auto text-sm">
+                    <i class="fa-solid fa-rotate-right"></i> 다시 꽃 피우기
+                </button>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Audio Effects -->
+    <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'water') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'perfect') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    osc.frequency.setValueAtTime(783.99, now + 0.16);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(170, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'bloom') {
+                    // Magical bloom harp sound
+                    [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.06);
+                        g.gain.setValueAtTime(0.15, now + idx * 0.06);
+                        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.4);
+                        o.start(now + idx * 0.06);
+                        o.stop(now + idx * 0.06 + 0.4);
+                    });
+                } else if (type === 'stamp') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    </script>
+
+    <!-- Game Logic Script -->
+    <script>
+        let growthGauge = 0;
+        let pointerPos = 0;
+        let pointerDirection = 1;
+        let pointerSpeed = 1.3;
+        let animFrameId = null;
+        let isGameActive = true;
+
+        const quizData = {
+            options: [
+                { text: "1. 꽃밭 / 숲말 (꽃나무와 숲이 가득함)", correct: true },
+                { text: "2. 돌밭 (자갈이 많아 붙여진 이름)", correct: false },
+                { text: "3. 바다 마을 (갯벌 중심 마을)", correct: false },
+                { text: "4. 높고 황량한 고개 마을", correct: false }
+            ]
+        };
+
+        const timingPointer = document.getElementById('timingPointer');
+        const growthProgressBar = document.getElementById('growthProgressBar');
+        const growthPercentText = document.getElementById('growthPercentText');
+        const flowerGraphic = document.getElementById('flowerGraphic');
+        const giantBloomGraphic = document.getElementById('giantBloomGraphic');
+        const waterEffect = document.getElementById('waterEffect');
+        const bgDecorations = document.getElementById('bgDecorations');
+
+        const stageWatering = document.getElementById('stageWatering');
+        const stageQuiz = document.getElementById('stageQuiz');
+        const stageSuccess = document.getElementById('stageSuccess');
+        const stampWrapper = document.getElementById('stampWrapper');
+
+        // Detailed SVG Flower Graphics for Stages
+        function getFlowerSVG(percent) {
+            if (percent < 30) {
+                // Stage 0: Cute Tiny Sprout with Pink Bud Tiny Leaf
+                return `
+                    <svg width="70" height="70" viewBox="0 0 100 100" class="animate-pulse-soft">
+                        <path d="M50 90 Q48 70 50 60" stroke="#16a34a" stroke-width="5" stroke-linecap="round" fill="none"/>
+                        <!-- Tiny Pink Bud -->
+                        <circle cx="50" cy="54" r="8" fill="#fda4af"/>
+                        <circle cx="50" cy="54" r="5" fill="#f43f5e"/>
+                        <!-- Leaves -->
+                        <path d="M50 75 Q32 65 28 52 Q45 52 50 75" fill="#4ade80"/>
+                        <path d="M50 70 Q68 60 72 47 Q55 47 50 70" fill="#22c55e"/>
+                    </svg>
+                `;
+            } else if (percent < 70) {
+                // Stage 1: Growing Stem with Pretty Pink Bud
+                return `
+                    <svg width="90" height="100" viewBox="0 0 100 120" class="animate-pulse-soft">
+                        <path d="M50 110 Q47 70 50 40" stroke="#15803d" stroke-width="6" stroke-linecap="round" fill="none"/>
+                        <path d="M50 85 Q20 75 15 55 Q40 60 50 85" fill="#4ade80"/>
+                        <path d="M50 70 Q80 60 85 40 Q60 45 50 70" fill="#22c55e"/>
+                        
+                        <!-- Growing Flower Bud -->
+                        <g transform="translate(50, 38)">
+                            <path d="M-12 0 C-20 -25 0 -35 0 -35 C0 -35 20 -25 12 0 Z" fill="#fb7185"/>
+                            <path d="M-8 0 C-15 -18 0 -28 0 -28 C0 -28 15 -18 8 0 Z" fill="#fff1f2"/>
+                            <path d="M-15 5 Q0 15 15 5 Q0 -5 -15 5" fill="#16a34a"/>
+                        </g>
+                    </svg>
+                `;
+            } else {
+                // Stage 2: Large Plump Swollen Pink Bud (Ready to Burst)
+                return `
+                    <svg width="110" height="120" viewBox="0 0 120 130" class="animate-float">
+                        <path d="M60 120 Q57 70 60 45" stroke="#15803d" stroke-width="7" stroke-linecap="round" fill="none"/>
+                        <path d="M60 95 Q25 85 20 65 Q45 70 60 95" fill="#4ade80"/>
+                        <path d="M60 80 Q95 70 100 50 Q75 55 60 80" fill="#22c55e"/>
+                        
+                        <!-- Big Soft Swollen Petal Bud -->
+                        <g transform="translate(60, 42)">
+                            <ellipse cx="-12" cy="-10" rx="16" ry="24" fill="#f43f5e" transform="rotate(-15)"/>
+                            <ellipse cx="12" cy="-10" rx="16" ry="24" fill="#fb7185" transform="rotate(15)"/>
+                            <ellipse cx="0" cy="-14" rx="15" ry="25" fill="#fff1f2"/>
+                            <circle cx="0" cy="-5" r="8" fill="#fef08a"/>
+                            <path d="M-18 8 Q0 20 18 8 Q0 -2 -18 8" fill="#15803d"/>
+                        </g>
+                    </svg>
+                `;
+            }
+        }
+
+        // SVG for Giant Bloom Stage
+        function getGiantBloomSVG() {
+            return `
+                <svg width="170" height="170" viewBox="0 0 160 160">
+                    <g transform="translate(80, 80)">
+                        <!-- Outer Soft Glow Petals -->
+                        <ellipse cx="0" cy="-45" rx="24" ry="38" fill="#f43f5e" opacity="0.9"/>
+                        <ellipse cx="42" cy="-14" rx="24" ry="38" fill="#fb7185" opacity="0.9" transform="rotate(72)"/>
+                        <ellipse cx="26" cy="36" rx="24" ry="38" fill="#fda4af" opacity="0.9" transform="rotate(144)"/>
+                        <ellipse cx="-26" cy="36" rx="24" ry="38" fill="#fb7185" opacity="0.9" transform="rotate(216)"/>
+                        <ellipse cx="-42" cy="-14" rx="24" ry="38" fill="#f43f5e" opacity="0.9" transform="rotate(288)"/>
+                        
+                        <!-- Inner Layer Petals (Yellow/Cream highlight) -->
+                        <ellipse cx="0" cy="-30" rx="16" ry="26" fill="#fff1f2"/>
+                        <ellipse cx="28" cy="-9" rx="16" ry="26" fill="#fffacd" transform="rotate(72)"/>
+                        <ellipse cx="17" cy="24" rx="16" ry="26" fill="#fff1f2" transform="rotate(144)"/>
+                        <ellipse cx="-17" cy="24" rx="16" ry="26" fill="#fffacd" transform="rotate(216)"/>
+                        <ellipse cx="-28" cy="-9" rx="16" ry="26" fill="#fff1f2" transform="rotate(288)"/>
+
+                        <!-- Center Stamen -->
+                        <circle cx="0" cy="0" r="18" fill="#fef08a"/>
+                        <circle cx="0" cy="0" r="10" fill="#f59e0b"/>
+                        <circle cx="-4" cy="-4" r="3" fill="#ffffff"/>
+                    </g>
+                </svg>
+            `;
+        }
+
+        // Animate Timing Pointer
+        function updateTimingGauge() {
+            if (!isGameActive) return;
+
+            pointerPos += pointerSpeed * pointerDirection;
+
+            if (pointerPos >= 100) {
+                pointerPos = 100;
+                pointerDirection = -1;
+            } else if (pointerPos <= 0) {
+                pointerPos = 0;
+                pointerDirection = 1;
+            }
+
+            timingPointer.style.left = `${pointerPos}%`;
+            animFrameId = requestAnimationFrame(updateTimingGauge);
+        }
+
+        // Handle Water Button Click
+        function handleWaterClick() {
+            if (!isGameActive) return;
+
+            playSound('water');
+
+            // Trigger Bucket Pouring Motion & Water Stream
+            const bucketContainer = document.getElementById('bucketContainer');
+            const bucketIcon = document.getElementById('bucketIcon');
+            const waterStream = document.getElementById('waterStream');
+
+            bucketContainer.style.opacity = '1';
+            bucketIcon.classList.remove('animate-pour');
+            void bucketIcon.offsetWidth; // Trigger reflow
+            bucketIcon.classList.add('animate-pour');
+
+            waterStream.style.opacity = '1';
+
+            setTimeout(() => {
+                bucketContainer.style.opacity = '0';
+                waterStream.style.opacity = '0';
+            }, 800);
+
+            // Check Gauge Zones
+            if (pointerPos >= 40 && pointerPos <= 60) {
+                growthGauge += 25;
+                showToast("🟢 적정량! (Perfect +25%)", "text-emerald-600");
+                playSound('perfect');
+            } else if ((pointerPos >= 20 && pointerPos < 40) || (pointerPos > 60 && pointerPos <= 80)) {
+                growthGauge += 10;
+                showToast("🟡 보통 물주기 (+10%)", "text-amber-600");
+            } else {
+                growthGauge = Math.max(0, growthGauge - 10);
+                showToast("🔴 물이 너무 많아요! (-10%)", "text-rose-500");
+                playSound('wrong');
+            }
+
+            if (growthGauge > 100) growthGauge = 100;
+
+            updateGrowthUI();
+
+            if (growthGauge >= 100) {
+                isGameActive = false;
+                cancelAnimationFrame(animFrameId);
+                setTimeout(startQuizStage, 700);
+            }
+        }
+
+        function closeGuideAndStart() {
+            document.getElementById('guideModal').classList.add('hidden');
+        }
+
+        function showToast(text, colorClass) {
+            const toast = document.createElement('div');
+            toast.className = `absolute top-3 bg-white/95 px-3 py-1 rounded-full shadow border text-xs font-bold ${colorClass} animate-bounce pointer-events-none z-30`;
+            toast.innerText = text;
+            document.getElementById('gardenArea').appendChild(toast);
+            setTimeout(() => toast.remove(), 1000);
+        }
+
+        function updateGrowthUI() {
+            growthProgressBar.style.width = `${growthGauge}%`;
+            growthPercentText.innerText = `${growthGauge}%`;
+            flowerGraphic.innerHTML = getFlowerSVG(growthGauge);
+
+            const scaleVal = 0.8 + (growthGauge / 100) * 0.45;
+            flowerGraphic.style.transform = `scale(${scaleVal})`;
+        }
+
+        // STAGE 2: Start Quiz
+        function startQuizStage() {
+            stageWatering.classList.add('hidden');
+            stageQuiz.classList.remove('hidden');
+            stageQuiz.classList.add('flex');
+
+            const container = document.getElementById('quizOptions');
+            container.innerHTML = '';
+
+            quizData.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3.5 rounded-xl border-2 border-pink-100 bg-white hover:bg-pink-50 hover:border-pink-300 font-bold text-xs sm:text-sm text-slate-700 transition-all flex items-center justify-between shadow-sm active:scale-98";
+                btn.innerText = opt.text;
+                btn.onclick = () => checkQuizAnswer(opt.correct, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        // Check Quiz Answer
+        function checkQuizAnswer(isCorrect, btnElement) {
+            const feedback = document.getElementById('quizFeedback');
+
+            if (isCorrect) {
+                playSound('perfect');
+                btnElement.classList.remove('bg-white', 'border-pink-100');
+                btnElement.classList.add('bg-pink-500', 'text-white', 'border-pink-600');
+                feedback.className = "h-7 text-center font-bold text-xs sm:text-sm text-pink-600";
+                feedback.innerText = "⭕ 정답입니다! 수촌리는 꽃나무와 물골이 아름다운 마을입니다.";
+
+                setTimeout(triggerSuccess, 1100);
+            } else {
+                playSound('wrong');
+                btnElement.classList.remove('bg-white');
+                btnElement.classList.add('bg-rose-100', 'border-rose-300', 'text-rose-600');
+                feedback.className = "h-7 text-center font-bold text-xs sm:text-sm text-rose-500";
+                feedback.innerText = "❌ 다시 선택해보세요! (힌트를 참고해보세요)";
+            }
+        }
+
+        // STAGE 3: Final Blooming Success
+        function triggerSuccess() {
+            stageQuiz.classList.add('hidden');
+            stageSuccess.classList.remove('hidden');
+            stageSuccess.classList.add('flex');
+
+            // Render Big Bloom Graphic
+            giantBloomGraphic.innerHTML = getGiantBloomSVG();
+            playSound('bloom');
+
+            // Background pastel garden decoration show
+            bgDecorations.style.opacity = '1';
+
+            // Stamp Effect
+            setTimeout(() => {
+                stampWrapper.style.opacity = '1';
+                playSound('stamp');
+            }, 550);
+
+            // Petal Rain Effect
+            startPetalRain();
+        }
+
+        // Falling Petals Canvas Animation
+        const canvas = document.getElementById('petalCanvas');
+        const ctx = canvas.getContext('2d');
+        let petals = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Petal {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.size = Math.random() * 11 + 7;
+                this.speedY = Math.random() * 1.6 + 1;
+                this.speedX = Math.random() * 1.2 - 0.6;
+                this.angle = Math.random() * 360;
+                this.spin = Math.random() * 2 - 1;
+                this.color = ['#fda4af', '#fb7185', '#f43f5e', '#fef08a', '#fff1f2'][Math.floor(Math.random() * 5)];
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += Math.sin(this.y * 0.01) + this.speedX;
+                this.angle += this.spin;
+                if (this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.angle * Math.PI) / 180);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        let petalAnimId = null;
+        function startPetalRain() {
+            petals = Array.from({ length: 50 }, () => new Petal());
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                petals.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                petalAnimId = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        function resetGame() {
+            if (petalAnimId) cancelAnimationFrame(petalAnimId);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            growthGauge = 0;
+            pointerPos = 0;
+            isGameActive = true;
+
+            stageSuccess.classList.add('hidden');
+            stageQuiz.classList.add('hidden');
+            stageWatering.classList.remove('hidden');
+
+            stampWrapper.style.opacity = '0';
+            bgDecorations.style.opacity = '0';
+
+            updateGrowthUI();
+            updateTimingGauge();
+        }
+
+        window.onload = function() {
+            flowerGraphic.innerHTML = getFlowerSVG(0);
+            updateGrowthUI();
+            updateTimingGauge();
+        };
+    </script>
+</body>
+</html>

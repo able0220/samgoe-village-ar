@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eee6ff" />
+  <title>금의리 거미줄 탐험 | 지명 유래 미션</title>
+  <style>
+    :root { --ink:#33274c; --purple:#7250c6; --purple-dark:#50319a; --lilac:#efe8ff; --mint:#bff5e7; --gold:#ffdb68; --pink:#ffb2ce; --red:#d8435e; }
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic",system-ui,sans-serif;color:var(--ink)}
+    body{background:radial-gradient(circle at 8% 15%,#fff6ce 0,transparent 24%),radial-gradient(circle at 92% 8%,#fbdcec 0,transparent 24%),linear-gradient(160deg,#faf6ff 0%,#e6efff 100%);padding:22px 12px 36px;}
+    button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent} button:focus-visible{outline:4px solid #e8bdff;outline-offset:4px}
+    .app{max-width:610px;margin:0 auto;border:2px solid rgba(113,80,198,.12);border-radius:30px;background:rgba(255,255,255,.92);box-shadow:0 17px 40px rgba(60,39,121,.12);overflow:hidden}
+    header{text-align:center;padding:24px 22px 16px;background:radial-gradient(circle at 85% 12%,#fce2f0 0,transparent 40%),linear-gradient(135deg,#f6f0ff,#e8f9f5);position:relative}
+    .tag{display:inline-flex;align-items:center;gap:6px;background:#fff;padding:7px 14px;border-radius:999px;color:#6848b3;font-size:13px;font-weight:900;letter-spacing:.3px;box-shadow:0 3px 10px #7450c61a}
+    .logo{margin:9px auto 4px;width:105px;height:95px;display:block;filter:drop-shadow(0 8px 7px #7553ba24)}
+    h1{font-size:clamp(27px,6.5vw,36px);letter-spacing:-1.5px;margin:7px 0 6px;line-height:1.25;color:#4e338c;font-weight:900}
+    .subtitle{font-weight:700;font-size:14px;color:#655879;margin:0;line-height:1.6}
+    .content{padding:20px clamp(16px,5vw,28px) 27px}
+    .scene{display:none;animation:appear .35s both} .scene.active{display:block}
+    @keyframes appear{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .story{background:#f7f3ff;border:1px solid #e7ddff;border-radius:22px;padding:17px 17px 16px;margin-bottom:17px;line-height:1.85;font-size:15px}
+    .story b{color:#6240b1}.story p{margin:0}.story p+p{margin-top:9px}
+    .label{font-size:13px;font-weight:900;color:#7a61af;letter-spacing:1px;margin-bottom:8px}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:17px 0}
+    .step{border:1px solid #eadfff;background:#fff;border-radius:16px;text-align:center;padding:13px 5px 11px;line-height:1.45;font-size:12px;font-weight:800}
+    .step .emo{display:block;font-size:26px;margin:0 0 5px}.step em{display:block;font-size:11px;font-style:normal;color:#84739b;margin-top:2px}
+    .bigbtn{display:block;width:100%;border:none;border-radius:18px;color:white;background:linear-gradient(120deg,#8059d9,#5935aa);box-shadow:0 7px 0 #43267e,0 14px 23px #7a56c82a;padding:17px 12px;font-size:18px;font-weight:900;transition:transform .12s,box-shadow .12s}
+    .bigbtn:active{transform:translateY(5px);box-shadow:0 2px 0 #43267e,0 5px 10px #7a56c82a}.bigbtn:disabled{opacity:.5;cursor:default}
+    .smallnote{text-align:center;font-size:12px;line-height:1.6;color:#8b7d9d;margin-top:15px}
+    .hud{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:11px;flex-wrap:wrap}
+    .pill{display:flex;gap:8px;align-items:center;border:1px solid #e8dfff;background:#f7f1ff;border-radius:99px;padding:9px 13px;font-size:14px;font-weight:900;color:#5a379e;font-variant-numeric:tabular-nums}
+    .pill.timer{background:#fff8e4;border-color:#ffebaa;color:#8c6115}.pill.urgent{background:#fff0f2;border-color:#ffc5cf;color:#ca3d59;animation:throb .65s infinite alternate}
+    @keyframes throb{to{transform:scale(1.05)}}
+    .track{height:11px;background:#e9e0f7;border-radius:20px;overflow:hidden;margin:0 0 13px}.bar{height:100%;width:0%;border-radius:20px;background:linear-gradient(90deg,#69dcbc,#8d67e9);transition:width .25s}
+    .arena{height:clamp(330px,75vw,420px);position:relative;border-radius:23px;overflow:hidden;touch-action:manipulation;user-select:none;background:radial-gradient(ellipse at 50% 56%,#44326c,#241b46 80%);border:4px solid #a88be5;box-shadow:inset 0 0 35px #110b3977,0 8px 18px #50388520;isolation:isolate}
+    .arena::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 17% 21%,#fff7 0 1px,transparent 2px),radial-gradient(circle at 75% 78%,#fff6 0 1px,transparent 2px),radial-gradient(circle at 81% 15%,#fff6 0 2px,transparent 3px);background-size:135px 115px,156px 121px,170px 140px;pointer-events:none}
+    .net{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:.95}
+    .net circle,.net polygon,.net line{fill:none;stroke:#bea6f2;stroke-width:.36;opacity:.35}.net .strong{stroke:#d5c7ff;stroke-width:.56;opacity:.45}
+    .threads{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}.threads line,.threads path{stroke:#ffeaaa;stroke-width:.75;fill:none;stroke-linecap:round;filter:drop-shadow(0 0 3px #fff69f);stroke-dasharray:150;stroke-dashoffset:150;animation:draw .55s ease-out forwards}
+    @keyframes draw{to{stroke-dashoffset:0}}
+    .spider-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;pointer-events:none;width:66px;height:69px;filter:drop-shadow(0 4px 5px #160f39aa)}
+    .sprite{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;border:0;background:transparent;width:64px;height:64px;padding:0;z-index:6;touch-action:manipulation}
+    .firefly .shine{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fffbe3,#ffdc5a 58%,#e99d34);color:#805009;font-size:19px;font-weight:900;border:3px solid #fff5af;box-shadow:0 0 0 6px #ffe67730,0 0 25px 10px #ffed95b3;animation:glow .9s ease-in-out alternate infinite}
+    .firefly .shine::before,.firefly .shine::after{content:"";position:absolute;z-index:-1;width:18px;height:26px;background:#dcfaffab;border:2px solid #f6ffff9e;border-radius:100% 4% 90% 10%;top:4px}.firefly .shine::before{left:7px;transform:rotate(-38deg)}.firefly .shine::after{right:7px;transform:scaleX(-1) rotate(-38deg)}
+    @keyframes glow{to{transform:scale(1.11);box-shadow:0 0 0 7px #ffe67745,0 0 35px 14px #ffed95d9}}
+    .rain{font-size:39px;filter:drop-shadow(0 2px 8px #8ceaff);animation:rainbob 1.2s ease-in-out infinite alternate}.rain span{display:block}
+    @keyframes rainbob{to{transform:translateY(6px) rotate(8deg)}}
+    .floattext{position:absolute;z-index:10;pointer-events:none;font-size:21px;font-weight:1000;color:#fff8bb;text-shadow:0 2px 4px #14092c;animation:floatup .65s forwards}
+    .floattext.bad{color:#98e7ff}@keyframes floatup{to{transform:translateY(-36px);opacity:0}}
+    .arena-tip{display:flex;justify-content:center;gap:13px;flex-wrap:wrap;font-size:13px;font-weight:800;margin:13px 0 8px;color:#66527e}
+    .arena-tip span{white-space:nowrap}.tinybtn{border:none;background:#eee6ff;color:#6243a8;padding:11px 17px;border-radius:13px;font-size:13px;font-weight:900}
+    .center{text-align:center}.scene h2{font-size:24px;line-height:1.35;color:#493084;margin:3px 0 11px;letter-spacing:-.7px}
+    .quizcard{background:linear-gradient(155deg,#f7f3ff,#f0fbf7);border:1px solid #e5dbf8;border-radius:22px;padding:24px 17px}
+    .quiz-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:14px}.quiz-head .label{margin:0}.quiz-head .success{font-size:12px;font-weight:900;color:#398d75}
+    .question{font-size:20px;font-weight:900;line-height:1.55;margin:0 0 18px;word-break:keep-all}
+    .choices{display:grid;gap:10px}.choice{border:2px solid #e5d9f5;background:#fff;text-align:left;border-radius:15px;padding:15px 14px;line-height:1.45;font-weight:800;font-size:15px;color:#423456;transition:background .15s,border-color .15s;min-height:57px}.choice:active{transform:scale(.985)}.choice.correct{border-color:#55bd9e;background:#e4fbf2}.choice.wrong{border-color:#ed87a2;background:#fff0f4}
+    .feedback{min-height:47px;margin:12px 1px 0;font-weight:800;line-height:1.55;font-size:14px;color:#8f3a5a}
+    .stamp-panel{text-align:center;padding:20px 12px 16px;background:linear-gradient(#fff9ef,#fff5f3);border:2px dashed #f3cfb5;border-radius:22px;margin:8px 0 16px;min-height:318px}
+    .stamp-icon{font-size:38px;margin-bottom:5px}.stamp-wrap{height:196px;display:flex;align-items:center;justify-content:center}
+    .seal{width:182px;height:182px;border:8px double var(--red);border-radius:50%;background:radial-gradient(circle,#fff5f0 30%,#ffe6e5);color:var(--red);display:flex;align-items:center;justify-content:center;flex-direction:column;transform:rotate(-14deg) scale(0);opacity:0;box-shadow:0 0 0 4px #d8435e2b,inset 0 0 0 2px #d8435e;padding:18px}
+    .seal.stamped{animation:stamping .57s cubic-bezier(.15,.8,.28,1.2) forwards}
+    @keyframes stamping{0%{transform:rotate(-14deg) scale(2.2);opacity:0;filter:blur(8px)}65%{opacity:1;filter:blur(0)}100%{transform:rotate(-14deg) scale(1);opacity:1}}
+    .seal .loc{font-size:22px;font-weight:1000;letter-spacing:1px;border-bottom:2px solid #d8435e;padding-bottom:7px;margin-bottom:7px}.seal .mid{font-size:29px;font-weight:1000;letter-spacing:3px}.seal .foot{font-size:13px;font-weight:900;letter-spacing:1px;margin-top:5px}
+    .stamp-guide{font-size:14px;line-height:1.65;font-weight:800;color:#a2655c;margin:5px 0 0}
+    .confetti{position:fixed;width:10px;height:14px;z-index:999;top:-20px;left:50%;pointer-events:none;animation:confetti-drop 1.7s linear forwards}
+    @keyframes confetti-drop{to{transform:translate(var(--dx),105vh) rotate(var(--rot));opacity:0}}
+    .bottom-row{display:flex;gap:10px;margin-top:12px}.bottom-row>*{flex:1}
+    @media(max-width:400px){.content{padding:16px 13px 23px}.step{font-size:11px}.story{font-size:14px}.choice{font-size:14px}.arena{height:340px}}
+    @media(prefers-reduced-motion:reduce){.scene,.seal.stamped,.threads line,.threads path,.firefly .shine,.rain,.pill.urgent{animation-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <span class="tag">🏡 우리 동네 지명 탐험 · Hi-Story</span>
+    <svg class="logo" viewBox="0 0 125 112" role="img" aria-label="웃는 보라색 거미 캐릭터">
+      <g fill="none" stroke="#6744aa" stroke-width="7" stroke-linecap="round">
+        <path d="M49 62 Q24 40 13 58 M48 73 Q20 64 9 83 M75 62 Q101 40 111 58 M77 73 Q105 64 116 83" />
+        <path d="M51 53 Q33 25 21 35 M74 53 Q91 25 103 35" />
+      </g>
+      <ellipse cx="62" cy="69" rx="37" ry="35" fill="#9d7bec" stroke="#6744aa" stroke-width="4" />
+      <ellipse cx="62" cy="35" rx="25" ry="25" fill="#9d7bec" stroke="#6744aa" stroke-width="4" />
+      <ellipse cx="52" cy="34" rx="7" ry="9" fill="white"/><ellipse cx="72" cy="34" rx="7" ry="9" fill="white"/>
+      <circle cx="54" cy="35" r="3.5" fill="#2b1d50"/><circle cx="70" cy="35" r="3.5" fill="#2b1d50"/>
+      <ellipse cx="39" cy="45" rx="6" ry="4" fill="#ffc5d4"/><ellipse cx="85" cy="45" rx="6" ry="4" fill="#ffc5d4"/>
+      <path d="M56 44 Q62 51 69 44" stroke="#3e286e" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M62 7 L62 -1" stroke="#6744aa" stroke-width="3" stroke-linecap="round"/>
+      <path d="M62 4 L56 -2 M62 4 L68 -2" stroke="#6744aa" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <h1>금의리 거미줄 탐험!</h1>
+    <p class="subtitle">반짝이를 모아 거미줄을 완성하고<br/>마을 이름의 비밀을 맞혀 보자!</p>
+  </header>
+  <div class="content">
+    <section id="intro" class="scene active" aria-label="게임 시작">
+      <div class="story">
+        <div class="label">📖 오늘의 마을 이야기</div>
+        <p>금의리(錦衣里)에는 마을 지형이 마치 <b>거미가 앉아 있는 모습</b>을 닮아 이름이 생겼다는 이야기가 전해져요.</p>
+        <p>그 이름이 한자로 적히면서 <b>‘금의(錦衣)’</b>라는 이름으로 굳어졌다고 해요. 거미 친구와 함께 지명의 비밀을 찾아볼까요?</p>
+      </div>
+      <div class="label">🎮 도전 방법</div>
+      <div class="steps">
+        <div class="step"><span class="emo">✨</span>반짝이 모으기<em>7개 터치!</em></div>
+        <div class="step"><span class="emo">💧</span>빗방울 피하기<em>시간 -3초</em></div>
+        <div class="step"><span class="emo">🏅</span>퀴즈 맞히기<em>도장 받기</em></div>
+      </div>
+      <button class="bigbtn" id="startBtn" type="button">🕸️ 거미줄 미션 시작!</button>
+      <p class="smallnote">휴대폰에서 터치하거나 컴퓨터에서 클릭하세요.<br/>인터넷 없이도 플레이할 수 있어요.</p>
+    </section>
+
+    <section id="game" class="scene" aria-label="거미줄 게임">
+      <div class="hud"><div class="pill" aria-live="polite">✨ 반짝이 <span id="score">0</span> / 7</div><div class="pill timer" id="clockpill">⏰ <span id="seconds">45</span>초</div></div>
+      <div class="track" aria-label="미션 진행률"><div class="bar" id="bar"></div></div>
+      <div class="arena" id="arena" aria-label="움직이는 반짝이를 터치하여 7개 모으세요">
+        <svg class="net" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <g>
+            <polygon points="50,37 62,42 68,52 59,64 42,63 33,52 50,37" />
+            <polygon points="50,25 74,35 84,54 68,77 32,77 17,53 50,25" />
+            <polygon points="50,8 89,23 98,55 77,94 22,94 3,55 50,8" />
+            <line x1="50" y1="50" x2="50" y2="1" class="strong"/><line x1="50" y1="50" x2="98" y2="16" class="strong"/>
+            <line x1="50" y1="50" x2="100" y2="55" class="strong"/><line x1="50" y1="50" x2="79" y2="99" class="strong"/>
+            <line x1="50" y1="50" x2="22" y2="99" class="strong"/><line x1="50" y1="50" x2="0" y2="55" class="strong"/>
+            <line x1="50" y1="50" x2="2" y2="16" class="strong"/>
+          </g>
+        </svg>
+        <svg class="threads" id="threads" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <svg class="spider-center" viewBox="0 0 70 74" aria-hidden="true">
+          <g fill="none" stroke="#bba4ff" stroke-width="4" stroke-linecap="round"><path d="M25 45L7 32L2 44 M24 49L7 54L4 66 M46 45L63 32L68 44 M46 49L63 54L66 66"/></g>
+          <ellipse cx="35" cy="48" rx="23" ry="23" fill="#a487ed" stroke="#dfceff" stroke-width="2"/>
+          <circle cx="35" cy="25" r="17" fill="#a487ed" stroke="#dfceff" stroke-width="2"/>
+          <ellipse cx="28" cy="24" rx="5.5" ry="7" fill="white"/><ellipse cx="42" cy="24" rx="5.5" ry="7" fill="white"/>
+          <circle cx="29" cy="25" r="2.5" fill="#201438"/><circle cx="41" cy="25" r="2.5" fill="#201438"/>
+          <path d="M30 34 Q35 39 40 34" fill="none" stroke="#40256f" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="arena-tip"><span>✨ 노란 반짝이 = +1</span><span>💧 파란 빗방울 = -3초</span></div>
+      <div class="center"><button class="tinybtn" id="restartGame" type="button">↻ 처음부터 다시 하기</button></div>
+    </section>
+
+    <section id="fail" class="scene center" aria-label="재도전">
+      <div style="font-size:65px;margin:22px 0 9px">🕸️</div>
+      <h2>앗, 시간이 다 됐어요!</h2>
+      <p style="line-height:1.8;font-size:15px;margin:0 0 24px">거미줄을 조금만 더 완성하면 돼요.<br/>반짝이 7개를 다시 모아 보세요!</p>
+      <button class="bigbtn" id="retryBtn" type="button">✨ 다시 도전하기</button>
+    </section>
+
+    <section id="quiz" class="scene" aria-label="지명 유래 퀴즈">
+      <div class="quizcard">
+        <div class="quiz-head"><span class="label">🧠 마지막 미션 · 지명 퀴즈</span><span class="success">✓ 거미줄 완성!</span></div>
+        <h2 style="font-size:23px">금의리 이름의 비밀은?</h2>
+        <p class="question">금의리의 이름이 생긴 유래로 소개된 이야기는 무엇일까요?</p>
+        <div class="choices" id="choices">
+          <button class="choice" data-correct="false" type="button">① 마을에서 금이 많이 발견되어서</button>
+          <button class="choice" data-correct="true" type="button">② 마을 지형이 거미가 앉아 있는 모습을 닮아서</button>
+          <button class="choice" data-correct="false" type="button">③ 마을 사람들이 비단옷을 즐겨 입어서</button>
+        </div>
+        <p class="feedback" id="feedback" role="status" aria-live="polite">정답을 골라야 탐험 완료 도장을 받을 수 있어요!</p>
+        <button class="bigbtn" id="goStamp" type="button" style="display:none;margin-top:8px">🏅 도장 받으러 가기</button>
+      </div>
+    </section>
+
+    <section id="stamp" class="scene" aria-label="탐험 완료 도장">
+      <div class="center"><div class="label">🎉 금의리 탐험 최종 성공</div><h2>모든 미션을 완료했어요!</h2></div>
+      <div class="stamp-panel">
+        <div class="stamp-icon">🕷️✨</div>
+        <div class="stamp-wrap"><div class="seal" id="seal" aria-label="금의리 탐험 완료 도장"><div class="loc">금 의 리</div><div class="mid">탐험 완료</div><div class="foot">HI-STORY ★</div></div></div>
+        <p class="stamp-guide" id="stampGuide">아래 버튼을 눌러<br/>탐험 완료 도장을 찍어 보세요!</p>
+      </div>
+      <button class="bigbtn" id="stampBtn" type="button">🔴 완료 도장 쾅! 찍기</button>
+      <div class="bottom-row"><button class="tinybtn" id="againBtn" type="button" style="display:none">↻ 다시 도전</button><button class="tinybtn" id="homeBtn" type="button" style="display:none">⌂ 처음 화면</button></div>
+    </section>
+  </div>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const scenes = ['intro','game','fail','quiz','stamp'];
+  let sprites = [], score = 0, timeLeft = 45, running = false, raf = 0, lastFrame = 0, lastSecond = 0, prevPoint = null, stamped = false;
+  const arena = $('arena');
+  const gameTarget = 7;
+  const show = id => { scenes.forEach(s => $(s).classList.toggle('active',s===id)); window.scrollTo({top:0,behavior:'instant'}); };
+  const rnd = (a,b)=>a+Math.random()*(b-a);
+  function stopGame() { running=false; cancelAnimationFrame(raf); sprites.forEach(s=>s.el.remove()); sprites=[]; }
+  function resetGame() {
+    stopGame();score=0;timeLeft=45;prevPoint=null;$('threads').replaceChildren();
+    $('score').textContent='0';$('seconds').textContent='45';$('bar').style.width='0%';$('clockpill').classList.remove('urgent');show('game');
+    // Allow layout to settle before calculating the responsive play area.
+    const w=arena.clientWidth,h=arena.clientHeight;
+    for(let i=0;i<4;i++) {
+      const bad=i===3;
+      const el=document.createElement('button');
+      el.type='button';el.className='sprite '+(bad?'rain':'firefly');
+      el.setAttribute('aria-label',bad?'빗방울, 만지지 마세요':'반짝이 잡기');
+      el.innerHTML=bad?'<span aria-hidden="true">💧</span>':'<span class="shine" aria-hidden="true">✦</span>';
+      let s={el,bad,x:rnd(55,w-55),y:rnd(55,h-55),vx:rnd(24,47)*(Math.random()<.5?-1:1),vy:rnd(18,36)*(Math.random()<.5?-1:1),cooldown:0};
+      el.addEventListener('pointerdown',e=>{if(!running)return;e.preventDefault(); e.stopPropagation(); grab(s);});
+      el.addEventListener('click',e=>{if(e.detail===0&&running)grab(s);});
+      arena.appendChild(el);sprites.push(s);position(s);
+    }
+    running=true;lastFrame=performance.now();lastSecond=lastFrame;raf=requestAnimationFrame(tick);
+  }
+  function position(s){s.el.style.left=s.x+'px';s.el.style.top=s.y+'px';}
+  function relocate(s){const w=arena.clientWidth,h=arena.clientHeight;s.x=rnd(48,Math.max(49,w-48));s.y=rnd(48,Math.max(49,h-48));s.vx=rnd(25,52)*(Math.random()<.5?-1:1);s.vy=rnd(20,39)*(Math.random()<.5?-1:1);position(s);}
+  function popText(s,txt,bad){const d=document.createElement('span');d.className='floattext'+(bad?' bad':'');d.textContent=txt;d.style.left=(s.x-23)+'px';d.style.top=(s.y-28)+'px';arena.appendChild(d);setTimeout(()=>d.remove(),700);}
+  function grab(s){
+    if(s.cooldown>performance.now())return;
+    s.cooldown=performance.now()+420;
+    if(s.bad){timeLeft=Math.max(0,timeLeft-3);$('seconds').textContent=timeLeft;popText(s,'-3초',true);relocate(s);if(timeLeft<=0){stopGame();show('fail');}return;}
+    score++; $('score').textContent=score;$('bar').style.width=(100*score/gameTarget)+'%';popText(s,'+1 ✨',false);
+    const nx=s.x/arena.clientWidth*100,ny=s.y/arena.clientHeight*100;
+    const svg=$('threads'), ns='http://www.w3.org/2000/svg';
+    const line=document.createElementNS(ns,'line');line.setAttribute('x1',prevPoint?prevPoint.x:50);line.setAttribute('y1',prevPoint?prevPoint.y:50);line.setAttribute('x2',nx);line.setAttribute('y2',ny);svg.appendChild(line);
+    // Every glow also builds a spoke, so the web visibly grows toward completion.
+    const spoke=document.createElementNS(ns,'line');spoke.setAttribute('x1',50);spoke.setAttribute('y1',50);spoke.setAttribute('x2',nx);spoke.setAttribute('y2',ny);svg.appendChild(spoke);
+    prevPoint={x:nx,y:ny};relocate(s);
+    if(score>=gameTarget){stopGame();setTimeout(()=>{show('quiz');resetQuiz();},500);}
+  }
+  function tick(now){
+    if(!running)return;
+    const dt=Math.min(.05,(now-lastFrame)/1000);lastFrame=now;
+    const w=arena.clientWidth,h=arena.clientHeight;
+    sprites.forEach(s=>{
+      s.x+=s.vx*dt;s.y+=s.vy*dt;
+      if(s.x<39){s.x=39;s.vx=Math.abs(s.vx)}if(s.x>w-39){s.x=w-39;s.vx=-Math.abs(s.vx)}
+      if(s.y<43){s.y=43;s.vy=Math.abs(s.vy)}if(s.y>h-43){s.y=h-43;s.vy=-Math.abs(s.vy)}
+      position(s);
+    });
+    const secondsElapsed=Math.floor((now-lastSecond)/1000);
+    if(secondsElapsed>0){timeLeft=Math.max(0,timeLeft-secondsElapsed);lastSecond+=secondsElapsed*1000;$('seconds').textContent=timeLeft;$('clockpill').classList.toggle('urgent',timeLeft<=10);}
+    if(timeLeft<=0){stopGame();show('fail');return;}
+    raf=requestAnimationFrame(tick);
+  }
+  function resetQuiz(){
+    $('feedback').textContent='정답을 골라야 탐험 완료 도장을 받을 수 있어요!';$('feedback').style.color='#8f3a5a';$('goStamp').style.display='none';
+    document.querySelectorAll('.choice').forEach(b=>{b.classList.remove('correct','wrong');b.disabled=false;});
+  }
+  function confetti(){const colors=['#b18cf1','#6bd9bd','#ffd36c','#f5a3c7','#ff8b83'];for(let i=0;i<33;i++){const bit=document.createElement('i');bit.className='confetti';bit.style.left=rnd(5,95)+'vw';bit.style.background=colors[i%colors.length];bit.style.setProperty('--dx',rnd(-130,130)+'px');bit.style.setProperty('--rot',rnd(250,1100)+'deg');bit.style.animationDelay=rnd(0,.4)+'s';document.body.appendChild(bit);setTimeout(()=>bit.remove(),2400);}}
+  function stamp(){if(stamped)return;stamped=true;$('seal').classList.add('stamped');$('stampGuide').innerHTML='🏅 <b>금의리 지명 탐험 인증 완료!</b><br/>이 화면을 선생님께 보여주세요.';$('stampBtn').style.display='none';$('againBtn').style.display='block';$('homeBtn').style.display='block';confetti();}
+  $('startBtn').addEventListener('click',resetGame);
+  $('retryBtn').addEventListener('click',resetGame);
+  $('restartGame').addEventListener('click',resetGame);
+  document.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',()=>{
+    if(b.disabled)return;
+    if(b.dataset.correct==='true'){
+      b.classList.add('correct');$('feedback').textContent='정답! 거미를 닮은 마을 지형에서 유래했다는 이야기예요. 🎉';$('feedback').style.color='#25896f';$('goStamp').style.display='block';document.querySelectorAll('.choice').forEach(x=>x.disabled=true);
+    }else{b.classList.add('wrong');$('feedback').textContent='조금 아쉬워요! 마을의 지형이 어떤 동물을 닮았는지 떠올려 보세요.';setTimeout(()=>b.classList.remove('wrong'),650);}
+  }));
+  $('goStamp').addEventListener('click',()=>{stamped=false;$('seal').classList.remove('stamped');$('stampGuide').innerHTML='아래 버튼을 눌러<br/>탐험 완료 도장을 찍어 보세요!';$('stampBtn').style.display='block';$('againBtn').style.display='none';$('homeBtn').style.display='none';show('stamp');});
+  $('stampBtn').addEventListener('click',stamp);
+  $('againBtn').addEventListener('click',resetGame);
+  $('homeBtn').addEventListener('click',()=>{stopGame();show('intro');});
+  document.addEventListener('visibilitychange',()=>{ // Pause rather than consume the countdown while students switch apps.
+    if(!running)return;
+    if(document.hidden){cancelAnimationFrame(raf);}else{lastFrame=performance.now();lastSecond=lastFrame;raf=requestAnimationFrame(tick);}
+  });
+})();
+</script>
+</body>
+</html>

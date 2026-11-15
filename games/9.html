@@ -1,0 +1,571 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>호곡리 정령 호호 - 에임 조준 게임</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Pretendard:wght@400;600;800&display=swap');
+
+    body {
+      font-family: 'Pretendard', sans-serif;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .font-traditional {
+      font-family: 'Gowun Batang', serif;
+    }
+
+    /* Custom Crosshair Area */
+    .game-area {
+      cursor: crosshair;
+    }
+
+    /* Glowing Target Effect */
+    @keyframes targetGlow {
+      0%, 100% { filter: drop-shadow(0 0 12px rgba(234, 179, 8, 0.9)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 25px rgba(234, 179, 8, 1)); transform: scale(1.08); }
+    }
+
+    .target-active {
+      animation: targetGlow 1.2s infinite ease-in-out;
+    }
+
+    /* Background Pattern */
+    .bg-pattern {
+      background-color: #0b140e;
+      background-image: radial-gradient(#1c3d26 1px, transparent 1px), radial-gradient(#1c3d26 1px, #0b140e 1px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+    }
+
+    /* Custom Scrollbar for Modal */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #059669;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-pattern text-slate-100 min-h-screen flex flex-col justify-between relative select-none">
+
+  <!-- Header Section -->
+  <header class="w-full p-4 flex justify-between items-center bg-emerald-950/80 backdrop-blur-md border-b border-amber-600/30 z-20 shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-amber-500 to-emerald-600 flex items-center justify-center font-bold text-xl shadow-lg border border-amber-300/50">
+        🐯
+      </div>
+      <div>
+        <h1 class="text-xl font-bold font-traditional text-amber-200 tracking-wide flex items-center gap-2">
+          호곡리 정령 <span class="text-amber-400">호호</span>
+        </h1>
+        <p class="text-xs text-emerald-300/80">호곡의 기억을 지키는 수호자</p>
+      </div>
+    </div>
+
+    <!-- Stats & Controls -->
+    <div class="flex items-center gap-3">
+      <!-- Timer Display -->
+      <div class="bg-slate-900/90 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-mono">
+        <i data-lucide="timer" class="w-4 h-4 text-amber-400"></i>
+        <span text-slate-400>시간:</span>
+        <span id="timer" class="text-amber-300 font-bold text-sm">0.0s</span>
+      </div>
+
+      <!-- Difficulty Selector -->
+      <div class="hidden md:flex items-center bg-slate-900/90 p-1 rounded-xl border border-amber-500/30 text-xs">
+        <button onclick="setDifficulty('normal')" id="btn-normal" class="px-3 py-1 rounded-lg transition-all text-slate-400">보통</button>
+        <button onclick="setDifficulty('fast')" id="btn-fast" class="px-3 py-1 rounded-lg transition-all bg-amber-500 text-slate-950 font-bold shadow">빠름</button>
+        <button onclick="setDifficulty('extreme')" id="btn-extreme" class="px-3 py-1 rounded-lg transition-all text-rose-400 hover:text-rose-300 font-bold">🔥 극악</button>
+      </div>
+
+      <!-- Rare Badge -->
+      <span class="px-3 py-1.5 text-xs font-extrabold tracking-wider bg-gradient-to-r from-emerald-600 to-teal-500 text-amber-100 border border-amber-400/50 rounded-full shadow-md flex items-center gap-1">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i> 희귀 RARE
+      </span>
+    </div>
+  </header>
+
+  <!-- Game Main Viewport -->
+  <main id="gameCanvas" class="game-area relative flex-1 w-full h-full overflow-hidden flex flex-col items-center justify-center p-4">
+
+    <!-- Canvas for Hit Particle Effects -->
+    <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
+
+    <!-- Instructions / Guide Header -->
+    <div id="gameInstructions" class="absolute top-6 left-1/2 -translate-x-1/2 bg-slate-900/80 border border-amber-500/30 backdrop-blur-md px-6 py-2.5 rounded-full text-center z-10 shadow-xl transition-all duration-300 flex flex-col sm:flex-row items-center gap-2">
+      <p class="text-sm font-medium text-amber-100 flex items-center gap-2">
+        <i data-lucide="crosshair" class="w-4 h-4 text-amber-400 animate-spin"></i>
+        움직이는 <span class="text-amber-300 font-bold">'귀여운 호랑이'</span> 타깃을 <span class="text-amber-400 font-extrabold underline">단 1회</span> 클릭하여 명중시키세요!
+      </p>
+      
+      <!-- Mobile Difficulty Controls -->
+      <div class="flex md:hidden items-center gap-1 bg-slate-950 p-1 rounded-lg border border-amber-500/20 text-xs mt-1 sm:mt-0">
+        <button onclick="setDifficulty('normal')" id="m-btn-normal" class="px-2 py-0.5 rounded text-slate-400">보통</button>
+        <button onclick="setDifficulty('fast')" id="m-btn-fast" class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold">빠름</button>
+        <button onclick="setDifficulty('extreme')" id="m-btn-extreme" class="px-2 py-0.5 rounded text-rose-400 font-bold">극악</button>
+      </div>
+    </div>
+
+    <!-- TARGET ELEMENT (Single-Click Hit Target with Custom Cute Tiger SVG) -->
+    <div 
+      id="target" 
+      onclick="hitTarget(event)"
+      class="absolute w-24 h-24 md:w-28 md:h-28 cursor-pointer target-active transition-all ease-out z-10 group duration-150" 
+      style="top: 40%; left: 45%;">
+      <div class="relative w-full h-full p-2 bg-gradient-to-b from-amber-400/40 to-emerald-900/60 rounded-3xl border-2 border-amber-400 backdrop-blur-sm shadow-[0_0_30px_rgba(251,191,36,0.5)] hover:scale-110 active:scale-95 transition-transform flex items-center justify-center">
+        
+        <!-- Custom Cute Tiger SVG Character -->
+        <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <!-- Ears -->
+          <circle cx="22" cy="24" r="14" fill="#F59E0B" />
+          <circle cx="22" cy="24" r="8" fill="#FDE68A" />
+          <circle cx="78" cy="24" r="14" fill="#F59E0B" />
+          <circle cx="78" cy="24" r="8" fill="#FDE68A" />
+          
+          <!-- Head Base -->
+          <circle cx="50" cy="52" r="38" fill="#F59E0B" />
+          
+          <!-- Tiger Forehead Stripes -->
+          <path d="M 50 16 L 50 28 M 43 20 L 57 20 M 45 25 L 55 25" stroke="#78350F" stroke-width="3.5" stroke-linecap="round" />
+          
+          <!-- Side Stripes -->
+          <path d="M 16 48 L 26 50 M 18 58 L 27 57" stroke="#78350F" stroke-width="3" stroke-linecap="round" />
+          <path d="M 84 48 L 74 50 M 82 58 L 73 57" stroke="#78350F" stroke-width="3" stroke-linecap="round" />
+          
+          <!-- Muzzle/Cheeks -->
+          <ellipse cx="40" cy="62" rx="13" ry="10" fill="#FFFBEB" />
+          <ellipse cx="60" cy="62" rx="13" ry="10" fill="#FFFBEB" />
+          
+          <!-- Eyes -->
+          <circle cx="35" cy="46" r="6" fill="#1E293B" />
+          <circle cx="37" cy="44" r="2" fill="#FFFFFF" />
+          <circle cx="65" cy="46" r="6" fill="#1E293B" />
+          <circle cx="67" cy="44" r="2" fill="#FFFFFF" />
+          
+          <!-- Blushes -->
+          <ellipse cx="25" cy="56" rx="5" ry="3" fill="#F43F5E" opacity="0.6" />
+          <ellipse cx="75" cy="56" rx="5" ry="3" fill="#F43F5E" opacity="0.6" />
+          
+          <!-- Nose & Mouth -->
+          <polygon points="50,56 45,51 55,51" fill="#D97706" />
+          <path d="M 45 61 Q 50 66 55 61" fill="none" stroke="#78350F" stroke-width="2.5" stroke-linecap="round" />
+          
+          <!-- Leaf Headband (Spirit Ornament) -->
+          <path d="M 32 26 Q 50 20 68 26" fill="none" stroke="#10B981" stroke-width="3" />
+          <circle cx="50" cy="22" r="4" fill="#34D399" />
+        </svg>
+
+        <!-- Reticle Overlay -->
+        <div class="absolute inset-0 border-2 border-dashed border-amber-300 rounded-3xl animate-spin style-spin-slow opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+      </div>
+    </div>
+
+    <!-- QUIZ MODAL -->
+    <div id="quizModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-4">
+      <div class="bg-gradient-to-b from-slate-900 via-emerald-950 to-slate-950 border-2 border-amber-500/60 max-w-md w-full rounded-2xl p-6 shadow-2xl text-center relative overflow-hidden">
+        
+        <div class="inline-flex p-3 bg-amber-500/20 border border-amber-400/30 rounded-full text-amber-300 mb-3 shadow-inner">
+          <i data-lucide="help-circle" class="w-8 h-8"></i>
+        </div>
+
+        <h2 class="text-xl font-bold font-traditional text-amber-200 mb-1">명사수! 단 한 번에 명중했습니다!</h2>
+        <p class="text-slate-300 text-xs mb-5">호곡리의 기억을 풀기 위해 수수께끼를 맞춰주세요.</p>
+
+        <!-- Quiz Container -->
+        <div class="bg-slate-950/70 border border-amber-500/30 rounded-xl p-4 mb-4 text-left">
+          <p class="text-xs text-amber-400 font-semibold mb-1 flex items-center gap-1">
+            <i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Q. 질문
+          </p>
+          <p class="text-base font-bold text-slate-100 font-traditional leading-relaxed">
+            "범아지에서 '<span class="text-amber-400 font-extrabold underline decoration-amber-500">범</span>'은 어떤 동물을 뜻할까요?"
+          </p>
+          <div class="mt-3 flex items-center gap-2 text-xs text-emerald-300/90 bg-emerald-950/60 p-2.5 rounded-lg border border-emerald-800/50">
+            <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400 shrink-0 animate-bounce"></i>
+            <span>힌트: <strong class="text-amber-300 tracking-widest text-sm">"ㅎㄹㅇ"</strong></span>
+          </div>
+        </div>
+
+        <!-- Answer Form -->
+        <form id="quizForm" onsubmit="submitAnswer(event)" class="space-y-3">
+          <div>
+            <input 
+              type="text" 
+              id="answerInput" 
+              placeholder="정답을 입력하세요" 
+              required
+              autocomplete="off"
+              class="w-full px-4 py-3 bg-slate-900 border border-amber-500/40 rounded-xl text-center text-amber-100 font-bold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 transition-all placeholder:text-slate-500 placeholder:font-normal text-base"
+            />
+          </div>
+
+          <p id="errorMessage" class="text-xs text-rose-400 font-medium hidden flex items-center justify-center gap-1">
+            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> 정답이 아닙니다. 다시 시도해 보세요!
+          </p>
+
+          <button 
+            type="submit" 
+            class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-600/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+            정답 확인하기
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESULT MODAL -->
+    <div id="resultModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-40 flex items-center justify-center p-4">
+      <div class="bg-gradient-to-b from-emerald-950 via-slate-900 to-slate-950 border-2 border-amber-400 max-w-lg w-full rounded-2xl p-6 md:p-8 shadow-2xl text-center relative overflow-hidden">
+        
+        <!-- Trophy Banner -->
+        <div class="w-16 h-16 bg-amber-400/20 border-2 border-amber-400 text-amber-300 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-amber-400/20">
+          <i data-lucide="award" class="w-10 h-10"></i>
+        </div>
+
+        <span class="text-xs font-bold tracking-widest text-amber-400 uppercase bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/30">
+          호곡리의 유래
+        </span>
+
+        <h3 class="text-2xl font-bold font-traditional text-amber-100 my-3">
+          정답입니다! (호랑이)
+        </h3>
+
+        <!-- Requested Final Message Card -->
+        <div class="bg-amber-950/40 border border-amber-500/50 rounded-xl p-5 my-4 relative shadow-inner">
+          <i data-lucide="quote" class="w-5 h-5 text-amber-500/40 absolute top-3 left-3"></i>
+          <p class="text-lg md:text-xl text-amber-200 font-traditional leading-relaxed font-semibold px-2">
+            "호랑이 모양의 골짜기 유래와 만세 시위 행진이 펼쳐진 길이다."
+          </p>
+          <i data-lucide="quote" class="w-5 h-5 text-amber-500/40 absolute bottom-3 right-3 rotate-180"></i>
+        </div>
+
+        <!-- Illustration Image -->
+        <div class="rounded-xl overflow-hidden border border-amber-500/30 shadow-md mb-6 p-6 bg-emerald-950/60 relative group flex flex-col items-center justify-center">
+          <!-- Cute Tiger Big Character SVG -->
+          <div class="w-32 h-32 my-2">
+            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl animate-pulse">
+              <!-- Ears -->
+              <circle cx="22" cy="24" r="14" fill="#F59E0B" />
+              <circle cx="22" cy="24" r="8" fill="#FDE68A" />
+              <circle cx="78" cy="24" r="14" fill="#F59E0B" />
+              <circle cx="78" cy="24" r="8" fill="#FDE68A" />
+              <!-- Head Base -->
+              <circle cx="50" cy="52" r="38" fill="#F59E0B" />
+              <!-- Stripes -->
+              <path d="M 50 16 L 50 28 M 43 20 L 57 20 M 45 25 L 55 25" stroke="#78350F" stroke-width="3.5" stroke-linecap="round" />
+              <path d="M 16 48 L 26 50 M 18 58 L 27 57" stroke="#78350F" stroke-width="3" stroke-linecap="round" />
+              <path d="M 84 48 L 74 50 M 82 58 L 73 57" stroke="#78350F" stroke-width="3" stroke-linecap="round" />
+              <!-- Cheeks -->
+              <ellipse cx="40" cy="62" rx="13" ry="10" fill="#FFFBEB" />
+              <ellipse cx="60" cy="62" rx="13" ry="10" fill="#FFFBEB" />
+              <!-- Eyes -->
+              <circle cx="35" cy="46" r="6" fill="#1E293B" />
+              <circle cx="37" cy="44" r="2" fill="#FFFFFF" />
+              <circle cx="65" cy="46" r="6" fill="#1E293B" />
+              <circle cx="67" cy="44" r="2" fill="#FFFFFF" />
+              <!-- Blushes -->
+              <ellipse cx="25" cy="56" rx="5" ry="3" fill="#F43F5E" opacity="0.6" />
+              <ellipse cx="75" cy="56" rx="5" ry="3" fill="#F43F5E" opacity="0.6" />
+              <!-- Nose & Mouth -->
+              <polygon points="50,56 45,51 55,51" fill="#D97706" />
+              <path d="M 45 61 Q 50 66 55 61" fill="none" stroke="#78350F" stroke-width="2.5" stroke-linecap="round" />
+              <!-- Leaf Headband -->
+              <path d="M 32 26 Q 50 20 68 26" fill="none" stroke="#10B981" stroke-width="3" />
+              <circle cx="50" cy="22" r="4" fill="#34D399" />
+            </svg>
+          </div>
+          <span class="text-xs text-amber-200 font-traditional mt-2">호곡리 수호정령 아기 호랑이 호호</span>
+        </div>
+
+        <!-- Replay Button -->
+        <button 
+          onclick="resetGame()" 
+          class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-900/40 transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
+          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+          다시 도전하기
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-3 px-4 text-center text-xs text-emerald-400/60 bg-emerald-950/70 border-t border-amber-900/20 backdrop-blur-sm z-10">
+    호곡리 정령 호호 조준 트레이닝 게임 &copy; 모든 권리 보유
+  </footer>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Web Audio API Synthesizer Sound Effects
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'hit') {
+        // Hit Sound Effect
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'correct') {
+        // Correct Answer Fanfare
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } else if (type === 'wrong') {
+        // Wrong Answer Sound
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.setValueAtTime(130, now + 0.15);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+    }
+
+    // DOM References
+    const gameCanvas = document.getElementById('gameCanvas');
+    const target = document.getElementById('target');
+    const quizModal = document.getElementById('quizModal');
+    const resultModal = document.getElementById('resultModal');
+    const answerInput = document.getElementById('answerInput');
+    const errorMessage = document.getElementById('errorMessage');
+    const timerDisplay = document.getElementById('timer');
+    const particleCanvas = document.getElementById('particleCanvas');
+    const ctx = particleCanvas.getContext('2d');
+
+    // Game Logic Variables
+    let moveInterval = null;
+    let timerInterval = null;
+    let startTime = 0;
+    let isGameActive = true;
+    let particles = [];
+
+    // Difficulty Speed Map (Interval ms)
+    const DIFFICULTIES = {
+      normal: { interval: 650, transition: 'duration-300' },
+      fast: { interval: 380, transition: 'duration-150' },
+      extreme: { interval: 200, transition: 'duration-75' }
+    };
+
+    let currentDifficulty = 'fast';
+
+    // Particle Canvas Resizing
+    function resizeCanvas() {
+      particleCanvas.width = gameCanvas.clientWidth;
+      particleCanvas.height = gameCanvas.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Particle Burst Effect on Target Hit
+    function createParticles(x, y) {
+      for (let i = 0; i < 25; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 12,
+          vy: (Math.random() - 0.5) * 12,
+          size: Math.random() * 6 + 2,
+          color: Math.random() > 0.5 ? '#f59e0b' : '#10b981',
+          alpha: 1
+        });
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+      particles.forEach((p, index) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fill();
+
+        if (p.alpha <= 0) {
+          particles.splice(index, 1);
+        }
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // Image Error Fallback
+    function handleImageError(imgElement) {
+      const svgFallback = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="20" fill="%23065f46"/><circle cx="100" cy="100" r="70" fill="%23f59e0b" opacity="0.3"/><text x="100" y="110" font-size="70" text-anchor="middle" dominant-baseline="middle">🐯</text><text x="100" y="160" font-size="16" fill="%23fef3c7" font-weight="bold" text-anchor="middle">호호 정령</text></svg>`;
+      imgElement.src = svgFallback;
+    }
+
+    // Set Difficulty
+    function setDifficulty(level) {
+      currentDifficulty = level;
+
+      target.classList.remove('duration-300', 'duration-150', 'duration-75');
+      target.classList.add(DIFFICULTIES[level].transition);
+
+      ['normal', 'fast', 'extreme'].forEach(lvl => {
+        const btn = document.getElementById(`btn-${lvl}`);
+        const mBtn = document.getElementById(`m-btn-${lvl}`);
+        const isActive = lvl === level;
+
+        const activeClasses = lvl === 'extreme' ? ['bg-rose-600', 'text-white', 'font-bold'] : ['bg-amber-500', 'text-slate-950', 'font-bold'];
+        const inactiveClasses = lvl === 'extreme' ? ['text-rose-400'] : ['text-slate-400'];
+
+        if (btn) btn.className = `px-3 py-1 rounded-lg transition-all ${isActive ? activeClasses.join(' ') : inactiveClasses.join(' ')}`;
+        if (mBtn) mBtn.className = `px-2 py-0.5 rounded ${isActive ? activeClasses.join(' ') : inactiveClasses.join(' ')}`;
+      });
+
+      if (isGameActive) {
+        startTargetMovement();
+      }
+    }
+
+    // Move Target
+    function moveTarget() {
+      if (!isGameActive) return;
+
+      const canvasBounds = gameCanvas.getBoundingClientRect();
+      const targetWidth = target.offsetWidth || 96;
+      const targetHeight = target.offsetHeight || 96;
+
+      const maxX = canvasBounds.width - targetWidth - 20;
+      const maxY = canvasBounds.height - targetHeight - 20;
+
+      const randomX = Math.max(20, Math.floor(Math.random() * maxX));
+      const randomY = Math.max(20, Math.floor(Math.random() * maxY));
+
+      target.style.left = `${randomX}px`;
+      target.style.top = `${randomY}px`;
+    }
+
+    function startTargetMovement() {
+      stopTargetMovement();
+      moveTarget();
+      moveInterval = setInterval(moveTarget, DIFFICULTIES[currentDifficulty].interval);
+    }
+
+    function stopTargetMovement() {
+      if (moveInterval) {
+        clearInterval(moveInterval);
+        moveInterval = null;
+      }
+    }
+
+    // Timer Controls
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        timerDisplay.textContent = `${elapsed.toFixed(1)}s`;
+      }, 100);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // Single Click Target Hit Handler
+    function hitTarget(event) {
+      if (!isGameActive) return;
+
+      playSound('hit');
+      isGameActive = false;
+      stopTargetMovement();
+      stopTimer();
+
+      // Spawn Hit Particles
+      const rect = gameCanvas.getBoundingClientRect();
+      createParticles(event.clientX - rect.left, event.clientY - rect.top);
+
+      // Open Quiz Modal
+      setTimeout(() => {
+        quizModal.classList.remove('hidden');
+        answerInput.focus();
+      }, 300);
+    }
+
+    // Quiz Answer Verification
+    function submitAnswer(e) {
+      e.preventDefault();
+      const userAnswer = answerInput.value.trim();
+
+      if (userAnswer === '호랑이') {
+        playSound('correct');
+        errorMessage.classList.add('hidden');
+        quizModal.classList.add('hidden');
+        
+        // Show Result Modal & Fire Confetti
+        resultModal.classList.remove('hidden');
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 140,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#f59e0b', '#10b981', '#fbbf24', '#ffffff']
+          });
+        }
+      } else {
+        playSound('wrong');
+        errorMessage.classList.remove('hidden');
+        answerInput.classList.add('animate-bounce');
+        setTimeout(() => answerInput.classList.remove('animate-bounce'), 500);
+      }
+    }
+
+    // Restart Game
+    function resetGame() {
+      resultModal.classList.add('hidden');
+      quizModal.classList.add('hidden');
+      answerInput.value = '';
+      errorMessage.classList.add('hidden');
+      timerDisplay.textContent = '0.0s';
+      isGameActive = true;
+      startTimer();
+      startTargetMovement();
+    }
+
+    // Initialize Game Loop
+    window.onload = () => {
+      startTimer();
+      startTargetMovement();
+    };
+  </script>
+</body>
+</html>
+```

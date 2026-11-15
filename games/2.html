@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>고돌이의 조암 퀴즈 골드런</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Noto Sans KR Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: none; /* Prevent touch scrolling on canvas */
+            user-select: none;
+        }
+        body {
+            background: #0f172a;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .bounce-anim {
+            animation: bounce 1.2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between items-center relative overflow-hidden">
+
+    <!-- Top UI Header -->
+    <header class="w-full max-w-2xl px-4 pt-3 pb-2 z-10 flex justify-between items-center bg-slate-900/90 backdrop-blur-md rounded-b-2xl shadow-2xl border-b border-amber-500/30">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl animate-spin" style="animation-duration: 3s;">🦔</span>
+            <h1 class="font-extrabold text-amber-400 text-xl sm:text-2xl tracking-tight">조암 퀴즈 골드런</h1>
+        </div>
+        <div id="progressBadge" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm sm:text-base font-black px-4 py-1.5 rounded-full shadow-lg">
+            STAGE 1 / 3
+        </div>
+    </header>
+
+    <!-- Floating Current Question Banner (In-game HUD) -->
+    <div class="w-full max-w-2xl px-4 my-2 z-10">
+        <div class="bg-slate-800/95 border-2 border-amber-400 rounded-2xl p-4 shadow-2xl text-center relative overflow-hidden backdrop-blur-md">
+            <div class="text-xs sm:text-sm font-black text-amber-400 mb-1 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-bolt text-yellow-300"></i> <span id="quizStageTitle">문제 1</span>
+            </div>
+            <p id="quizQuestionText" class="text-sm sm:text-base font-bold text-white leading-snug break-keep min-h-[48px] flex items-center justify-center">
+                '조암(朝岩)'이라는 지명은 마을에 있던 커다란 바위에 아침 해가 솟아오를 때 햇빛이 반사되어 광채가 사방으로 퍼졌던 모습에서 유래했다.
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Canvas Viewport -->
+    <div class="relative w-full flex-1 max-w-2xl px-2 pb-2">
+        <div class="w-full h-full rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-700 relative">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- Control Guide Overlay -->
+            <div id="touchGuide" class="absolute inset-x-0 bottom-6 pointer-events-none flex justify-center items-center">
+                <div class="bg-black/70 text-white text-sm sm:text-base font-bold px-6 py-2.5 rounded-full border border-amber-400 flex items-center gap-3 backdrop-blur-sm bounce-anim">
+                    <span>👈 화면을 왼쪽/오른쪽으로 눌러 이동! 👉</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Fail / Game Over Modal -->
+    <div id="failModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-30 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-red-500 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl text-white transform transition-all scale-100">
+            <div class="text-6xl mb-2">💥</div>
+            <h2 class="text-2xl font-black mb-1 text-red-500">실패! (오답)</h2>
+            <p class="text-xs text-slate-400 mb-4">문제가 고돌이에게 부딪혔습니다!</p>
+            
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 my-3 text-left">
+                <div class="text-xs font-black text-amber-400 mb-1" id="failAnswerLabel">정답: O (참)</div>
+                <p id="failExplanation" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium break-keep">
+                    해설 내용이 여기에 들어갑니다.
+                </p>
+            </div>
+
+            <button id="retryBtn" class="w-full mt-3 py-3.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-extrabold text-base rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> 다시 도전하기
+            </button>
+        </div>
+    </div>
+
+    <!-- Grand Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-40 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-slate-900 via-slate-800 to-amber-950/40 border-2 border-amber-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl text-white relative">
+            <div class="text-7xl mb-2">🏆</div>
+            <h2 class="text-3xl font-black text-amber-400 mb-1">성공! 🎉</h2>
+            <p class="text-amber-200 text-sm font-bold mb-4">3문제를 모두 완벽하게 맞혔습니다!</p>
+
+            <div class="bg-slate-800/90 border border-amber-500/40 p-4 rounded-2xl mb-6 shadow-inner text-left space-y-2 text-xs sm:text-sm">
+                <div class="text-amber-300 font-bold mb-1">🎓 조암 지명 유래 요약</div>
+                <p class="text-slate-200 leading-snug">
+                    <b>1. 조암(朝岩):</b> 아침 해(朝)가 바위(岩)에 반사되어 빛나던 모습에서 유래 (O)
+                </p>
+                <p class="text-slate-200 leading-snug">
+                    <b>2. 순우리말:</b> 과거 '아침돌', '돌래말'이라 불림 (O)
+                </p>
+                <p class="text-slate-200 leading-snug">
+                    <b>3. 한자 뜻:</b> '암(岩)'은 성곽이 아니라 마을의 '바위'를 의미 (X)
+                </p>
+            </div>
+
+            <button id="restartBtn" class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black text-lg rounded-2xl shadow-xl transition-transform active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> 처음부터 다시 뛰기
+            </button>
+        </div>
+    </div>
+
+    <!-- Web Audio FX Synthesizer -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playPass() {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.06);
+                    gain.gain.setValueAtTime(0.2, now + i * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.06);
+                    osc.stop(now + i * 0.06 + 0.25);
+                });
+            }
+
+            playCrash() {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.linearRampToValueAtTime(40, now + 0.4);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+
+            playVictory() {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.1);
+                    gain.gain.setValueAtTime(0.25, now + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.1);
+                    osc.stop(now + i * 0.1 + 0.35);
+                });
+            }
+        }
+        const sound = new SoundEngine();
+    </script>
+
+    <!-- Main Runner Engine -->
+    <script>
+        const quizData = [
+            {
+                stageTitle: "문제 1",
+                progressText: "STAGE 1 / 3",
+                question: "'조암(朝岩)'이라는 지명은 마을에 있던 커다란 바위에 아침 해가 솟아오를 때 햇빛이 반사되어 광채가 사방으로 퍼졌던 모습에서 유래했다.",
+                answer: "O",
+                answerLabel: "정답: O (참)",
+                explanation: "조암(朝岩)은 마을에 있던 바위에 아침 해(朝)가 솟아오를 때 햇빛이 찬란하게 반사되어 아름답게 빛났던 데서 유래한 이름입니다."
+            },
+            {
+                stageTitle: "문제 2",
+                progressText: "STAGE 2 / 3",
+                question: "조암 지역은 과거에 '아침돌' 또는 '돌래말'이라는 순우리말 이름으로도 불렸다.",
+                answer: "O",
+                answerLabel: "정답: O (참)",
+                explanation: "한자 지명인 조암으로 불리기 전에는 우리말인 '아침돌'이나 '돌래말' 등으로 불리기도 했습니다."
+            },
+            {
+                stageTitle: "문제 3",
+                progressText: "STAGE 3 / 3",
+                question: "지명에 쓰인 '조(朝)' 자는 아침을 의미하며, '암(岩)' 자는 마을을 지켜주는 거대한 인공 성곽을 뜻한다.",
+                answer: "X",
+                answerLabel: "정답: X (거짓)",
+                explanation: "'조(朝)'는 아침을 뜻하는 것이 맞으나, '암(岩)'은 성곽이 아니라 마을에 있던 '바위'를 뜻합니다."
+            }
+        ];
+
+        // Canvas Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Element References
+        const quizStageTitle = document.getElementById('quizStageTitle');
+        const progressBadge = document.getElementById('progressBadge');
+        const quizQuestionText = document.getElementById('quizQuestionText');
+        const failModal = document.getElementById('failModal');
+        const failAnswerLabel = document.getElementById('failAnswerLabel');
+        const failExplanation = document.getElementById('failExplanation');
+        const retryBtn = document.getElementById('retryBtn');
+        const victoryModal = document.getElementById('victoryModal');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // Game World State
+        let canvasWidth = 0;
+        let canvasHeight = 0;
+        let isRunning = false;
+
+        let currentQuestionIndex = 0;
+        let roadScrollOffset = 0;
+        
+        // SLOWED DOWN SPEED
+        const scrollSpeed = 0.0035; 
+
+        // Godori Player State
+        const godori = {
+            lane: 0.5, // 0 = Left Lane (O), 1 = Right Lane (X), 0.5 = Center
+            targetLane: 0.5,
+            x: 0,
+            y: 0,
+            radius: 38,
+            rollAngle: 0
+        };
+
+        // Current Hurdle approaching from distant horizon
+        let activeHurdle = {
+            progress: 0,
+            stageIndex: 0,
+            passed: false
+        };
+
+        // Particles
+        let particles = [];
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvasWidth = container.clientWidth;
+            canvasHeight = container.clientHeight;
+
+            canvas.width = canvasWidth * (window.devicePixelRatio || 1);
+            canvas.height = canvasHeight * (window.devicePixelRatio || 1);
+            ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+            godori.y = canvasHeight * 0.80;
+            godori.radius = Math.min(canvasWidth, canvasHeight) * 0.095;
+        }
+
+        // Initialize / Reset Game
+        function startGame() {
+            currentQuestionIndex = 0;
+            updateQuestionUI();
+            resetHurdle(0);
+            godori.lane = 0.5;
+            godori.targetLane = 0.5;
+            particles = [];
+            isRunning = true;
+            failModal.classList.add('hidden');
+            victoryModal.classList.add('hidden');
+        }
+
+        function updateQuestionUI() {
+            if (currentQuestionIndex < quizData.length) {
+                const q = quizData[currentQuestionIndex];
+                quizStageTitle.innerText = q.stageTitle;
+                progressBadge.innerText = q.progressText;
+                quizQuestionText.innerText = q.question;
+            }
+        }
+
+        function resetHurdle(stageIdx) {
+            activeHurdle = {
+                progress: -0.15,
+                stageIndex: stageIdx,
+                passed: false
+            };
+        }
+
+        // Input handling
+        function handlePointerMove(clientX) {
+            const rect = canvas.getBoundingClientRect();
+            const relX = clientX - rect.left;
+            if (relX < canvasWidth * 0.5) {
+                godori.targetLane = 0.25; // O Lane
+            } else {
+                godori.targetLane = 0.75; // X Lane
+            }
+            sound.init();
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) handlePointerMove(e.touches[0].clientX);
+        }, { passive: true });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) handlePointerMove(e.touches[0].clientX);
+        }, { passive: true });
+
+        canvas.addEventListener('mousedown', (e) => {
+            handlePointerMove(e.clientX);
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                godori.targetLane = 0.25;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                godori.targetLane = 0.75;
+            }
+            sound.init();
+        });
+
+        // Spawn Confetti Particle Effects
+        function spawnParticles(x, y, color) {
+            for (let i = 0; i < 35; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10 - 3,
+                    color: color,
+                    radius: Math.random() * 6 + 4,
+                    alpha: 1
+                });
+            }
+        }
+
+        // Update Physics & Game Loop Logic
+        function update() {
+            if (!isRunning) return;
+
+            godori.lane += (godori.targetLane - godori.lane) * 0.15;
+            godori.rollAngle += 0.08;
+
+            roadScrollOffset = (roadScrollOffset + scrollSpeed * 2) % 1.0;
+            activeHurdle.progress += scrollSpeed;
+
+            if (!activeHurdle.passed && activeHurdle.progress >= 0.76) {
+                activeHurdle.passed = true;
+
+                const q = quizData[currentQuestionIndex];
+                const chosenAnswer = (godori.lane < 0.5) ? "O" : "X";
+                const isCorrect = (chosenAnswer === q.answer);
+
+                const chosenX = (godori.lane < 0.5) ? getLaneX(0.25, 0.76) : getLaneX(0.75, 0.76);
+
+                if (isCorrect) {
+                    sound.playPass();
+                    spawnParticles(chosenX, godori.y, '#22c55e');
+
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < quizData.length) {
+                        updateQuestionUI();
+                        resetHurdle(currentQuestionIndex);
+                    } else {
+                        isRunning = false;
+                        sound.playVictory();
+                        setTimeout(() => victoryModal.classList.remove('hidden'), 400);
+                    }
+                } else {
+                    sound.playCrash();
+                    spawnParticles(godori.x, godori.y, '#ef4444');
+                    isRunning = false;
+
+                    failAnswerLabel.innerText = q.answerLabel;
+                    failExplanation.innerText = q.explanation;
+                    setTimeout(() => failModal.classList.remove('hidden'), 400);
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.025;
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function getLaneX(laneRatio, progress) {
+            const horizonX = canvasWidth * 0.5;
+            const bottomX = canvasWidth * laneRatio;
+            return horizonX + (bottomX - horizonX) * Math.max(0, progress);
+        }
+
+        function getPerspectiveY(progress) {
+            const horizonY = canvasHeight * 0.20;
+            return horizonY + (canvasHeight - horizonY) * Math.max(0, progress);
+        }
+
+        // Rendering Engine
+        function render() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Sky
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, canvasHeight * 0.2);
+            skyGrad.addColorStop(0, '#0284c7');
+            skyGrad.addColorStop(1, '#38bdf8');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight * 0.20);
+
+            // Sun
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(canvasWidth * 0.5, canvasHeight * 0.17, 45, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mountains
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(0, canvasHeight * 0.20);
+            ctx.lineTo(canvasWidth * 0.25, canvasHeight * 0.14);
+            ctx.lineTo(canvasWidth * 0.5, canvasHeight * 0.20);
+            ctx.lineTo(canvasWidth * 0.75, canvasHeight * 0.13);
+            ctx.lineTo(canvasWidth, canvasHeight * 0.20);
+            ctx.fill();
+
+            // Track
+            const horizonY = canvasHeight * 0.20;
+            const roadTopWidth = canvasWidth * 0.18;
+            const roadBottomWidth = canvasWidth * 1.15;
+
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.moveTo(canvasWidth * 0.5 - roadTopWidth / 2, horizonY);
+            ctx.lineTo(canvasWidth * 0.5 + roadTopWidth / 2, horizonY);
+            ctx.lineTo(canvasWidth * 0.5 + roadBottomWidth / 2, canvasHeight);
+            ctx.lineTo(canvasWidth * 0.5 - roadBottomWidth / 2, canvasHeight);
+            ctx.closePath();
+            ctx.fill();
+
+            // Grass
+            ctx.fillStyle = '#16a34a';
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY);
+            ctx.lineTo(canvasWidth * 0.5 - roadTopWidth / 2, horizonY);
+            ctx.lineTo(canvasWidth * 0.5 - roadBottomWidth / 2, canvasHeight);
+            ctx.lineTo(0, canvasHeight);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(canvasWidth, horizonY);
+            ctx.lineTo(canvasWidth * 0.5 + roadTopWidth / 2, horizonY);
+            ctx.lineTo(canvasWidth * 0.5 + roadBottomWidth / 2, canvasHeight);
+            ctx.lineTo(canvasWidth, canvasHeight);
+            ctx.fill();
+
+            // Lines
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 8; i++) {
+                let p = (i / 8 + roadScrollOffset * 0.12) % 1.0;
+                let py = getPerspectiveY(p);
+                let px = getLaneX(0.5, p);
+                let scale = p;
+                ctx.beginPath();
+                ctx.arc(px, py, 3 * scale, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            if (activeHurdle.progress > -0.1 && activeHurdle.progress <= 1.05) {
+                drawHurdleGates(activeHurdle.progress);
+            }
+
+            godori.x = getLaneX(godori.lane, 0.76);
+            drawGodoriCharacter(godori.x, godori.y, godori.radius);
+
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            update();
+            requestAnimationFrame(render);
+        }
+
+        function drawHurdleGates(progress) {
+            const pY = getPerspectiveY(progress);
+            const leftX = getLaneX(0.25, progress);
+            const rightX = getLaneX(0.75, progress);
+
+            const scale = Math.max(0.2, progress * 1.35);
+            const gateRadius = 52 * scale;
+
+            ctx.save();
+
+            if (progress > 0.05 && progress < 0.72) {
+                const bannerY = pY - 100 * scale;
+                const bannerW = 250 * scale;
+                const bannerH = 50 * scale;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 3 * scale;
+                ctx.beginPath();
+                ctx.roundRect(canvasWidth * 0.5 - bannerW / 2, bannerY, bannerW, bannerH, 10 * scale);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fde047';
+                ctx.font = `900 ${16 * scale}px "Noto Sans KR"`;
+                ctx.textAlign = 'center';
+                ctx.fillText(`⚡ Q${currentQuestionIndex + 1}번 선택의 문 접근 중!`, canvasWidth * 0.5, bannerY + bannerH * 0.65);
+            }
+
+            drawSingleGate(leftX, pY, gateRadius, 'O', '#22c55e', '#dcfce7', scale);
+            drawSingleGate(rightX, pY, gateRadius, 'X', '#ef4444', '#fee2e2', scale);
+
+            ctx.restore();
+        }
+
+        function drawSingleGate(x, y, radius, symbol, color, bgColor, scale) {
+            ctx.beginPath();
+            ctx.ellipse(x, y + radius * 0.8, radius * 0.95, radius * 0.3, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = bgColor;
+            ctx.fill();
+            ctx.lineWidth = 6 * scale;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.font = `900 ${radius * 1.3}px "Noto Sans KR"`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(symbol, x, y + 2 * scale);
+        }
+
+        function drawGodoriCharacter(x, y, r) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.beginPath();
+            ctx.ellipse(0, r * 0.75, r * 0.85, r * 0.28, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fill();
+
+            ctx.rotate(godori.rollAngle);
+
+            ctx.fillStyle = '#78350f';
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const sx = Math.cos(angle) * (r * 1.05);
+                const sy = Math.sin(angle) * (r * 1.05);
+                ctx.beginPath();
+                ctx.arc(sx, sy, r * 0.24, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#d97706';
+            ctx.fill();
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#451a03';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(r * 0.1, r * 0.08, r * 0.65, r * 0.55, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#fef3c7';
+            ctx.fill();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-r * 0.15, -r * 0.1, r * 0.1, 0, Math.PI * 2);
+            ctx.arc(r * 0.35, -r * 0.1, r * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(-r * 0.18, -r * 0.13, r * 0.035, 0, Math.PI * 2);
+            ctx.arc(r * 0.32, -r * 0.13, r * 0.035, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(r * 0.1, r * 0.08, r * 0.14, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        retryBtn.onclick = () => startGame();
+        restartBtn.onclick = () => startGame();
+
+        window.onload = () => {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            startGame();
+            requestAnimationFrame(render);
+        };
+    </script>
+</body>
+</html>

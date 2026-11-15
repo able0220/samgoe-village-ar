@@ -1,0 +1,218 @@
+[
+  {
+    "id": 1,
+    "targetIndex": 0,
+    "photo": "assets/photos/1.jpg",
+    "game": "games/1.html",
+    "sourcePhoto": "1_쌍봉산 애공 기념비.jpg",
+    "sourceGame": "1_쌍봉산.html"
+  },
+  {
+    "id": 2,
+    "targetIndex": 1,
+    "photo": "assets/photos/2.jpg",
+    "game": "games/2.html",
+    "sourcePhoto": "2_조암리보호수.jpg",
+    "sourceGame": "2_조암리.html"
+  },
+  {
+    "id": 3,
+    "targetIndex": 2,
+    "photo": "assets/photos/3.jpg",
+    "game": "games/3.html",
+    "sourcePhoto": "3_수정고개안길.jpg",
+    "sourceGame": "3_수정.html"
+  },
+  {
+    "id": 4,
+    "targetIndex": 3,
+    "photo": "assets/photos/4.jpg",
+    "game": "games/4.html",
+    "sourcePhoto": "4_어은리_1리 은골동 표지석.jpg",
+    "sourceGame": "4_어은리낚시_퀴즈_게임_1문제.html"
+  },
+  {
+    "id": 5,
+    "targetIndex": 4,
+    "photo": "assets/photos/5.jpg",
+    "game": "games/5.html",
+    "sourcePhoto": "5_조암시장.jpg",
+    "sourceGame": "5_조암시장_게임&퀴즈.html"
+  },
+  {
+    "id": 6,
+    "targetIndex": 5,
+    "photo": "assets/photos/6.jpg",
+    "game": "games/6.html",
+    "sourcePhoto": "6_운평3리_굴우물마을 표지석.jpg",
+    "sourceGame": "6_운평3리_굴우물.html"
+  },
+  {
+    "id": 7,
+    "targetIndex": 6,
+    "photo": "assets/photos/7.jpg",
+    "game": "games/7.html",
+    "sourcePhoto": "7_원안3리_월지동.jpg",
+    "sourceGame": "7_원안리.html"
+  },
+  {
+    "id": 8,
+    "targetIndex": 7,
+    "photo": "assets/photos/8.jpg",
+    "game": "games/8.html",
+    "sourcePhoto": "8_화수2리 새터마을 표지석.jpg",
+    "sourceGame": "8_화수리.html"
+  },
+  {
+    "id": 9,
+    "targetIndex": 8,
+    "photo": "assets/photos/9.jpg",
+    "game": "games/9.html",
+    "sourcePhoto": "9_호곡리 범아지마을.jpg",
+    "sourceGame": "9_호곡리.html"
+  },
+  {
+    "id": 10,
+    "targetIndex": 9,
+    "photo": "assets/photos/10.jpg",
+    "game": "games/10.html",
+    "sourcePhoto": "10_주곡1리_박우물.jpg",
+    "sourceGame": "10_주곡리_주디의_구슬치기.html"
+  },
+  {
+    "id": 11,
+    "targetIndex": 10,
+    "photo": "assets/photos/11.jpg",
+    "game": "games/11.html",
+    "sourcePhoto": "11_멱우2리 표지석2_.jpg",
+    "sourceGame": "11_멱우리.html"
+  },
+  {
+    "id": 12,
+    "targetIndex": 11,
+    "photo": "assets/photos/12.jpg",
+    "game": "games/12.html",
+    "sourcePhoto": "12_한각2리_죽말마을 표지석.jpg",
+    "sourceGame": "12_한각리.html"
+  },
+  {
+    "id": 13,
+    "targetIndex": 12,
+    "photo": "assets/photos/13.jpg",
+    "game": "games/13.html",
+    "sourcePhoto": "13_사곡리 장작터버스정류장.jpg",
+    "sourceGame": "13_사곡리 장작터.html"
+  },
+  {
+    "id": 14,
+    "targetIndex": 13,
+    "photo": "assets/photos/14.jpg",
+    "game": "games/14.html",
+    "sourcePhoto": "14_사랑1리_진개골.jpg",
+    "sourceGame": "14_사랑리.html"
+  },
+  {
+    "id": 15,
+    "targetIndex": 14,
+    "photo": "assets/photos/15.jpg",
+    "game": "games/15.html",
+    "sourcePhoto": "15_노진1리_갈우물표지석.jpg",
+    "sourceGame": "15_노진리_1리_갈우물.html"
+  },
+  {
+    "id": 16,
+    "targetIndex": 15,
+    "photo": "assets/photos/16.jpg",
+    "game": "games/16.html",
+    "sourcePhoto": "16_이화1리_덕목마을 표지석.jpg",
+    "sourceGame": "16_이화리.html"
+  },
+  {
+    "id": 17,
+    "targetIndex": 16,
+    "photo": "assets/photos/17.jpg",
+    "game": "games/17.html",
+    "sourcePhoto": "17_화산1리_배미마을.jpg",
+    "sourceGame": "17_화산1리_배미.html"
+  },
+  {
+    "id": 18,
+    "targetIndex": 17,
+    "photo": "assets/photos/18.jpg",
+    "game": "games/18.html",
+    "sourcePhoto": "18_석천2리_낭깨마을.jpg",
+    "sourceGame": "18_석천2리_낭깨.html"
+  },
+  {
+    "id": 19,
+    "targetIndex": 18,
+    "photo": "assets/photos/19.jpg",
+    "game": "games/19.html",
+    "sourcePhoto": "19_매향1리_5리표지석.jpg",
+    "sourceGame": "19_매향리.html"
+  },
+  {
+    "id": 20,
+    "targetIndex": 19,
+    "photo": "assets/photos/20.jpg",
+    "game": "games/20.html",
+    "sourcePhoto": "20_덕다1리.jpg",
+    "sourceGame": "20_덕다2리_구래.html"
+  },
+  {
+    "id": 21,
+    "targetIndex": 20,
+    "photo": "assets/photos/21.jpg",
+    "game": "games/21.html",
+    "sourcePhoto": "21_독정1리_독쟁이 표지석.jpg",
+    "sourceGame": "21_독정1리_독쟁이.html"
+  },
+  {
+    "id": 22,
+    "targetIndex": 21,
+    "photo": "assets/photos/22.jpg",
+    "game": "games/22.html",
+    "sourcePhoto": "22_독정2리노인회관_버선말 터.jpg",
+    "sourceGame": "22_독정2리_버선말.html"
+  },
+  {
+    "id": 23,
+    "targetIndex": 22,
+    "photo": "assets/photos/23.jpg",
+    "game": "games/23.html",
+    "sourcePhoto": "23_독정3리_거묵골 표지석.jpg",
+    "sourceGame": "23_독정3리_거묵골_감드러지.html"
+  },
+  {
+    "id": 24,
+    "targetIndex": 23,
+    "photo": "assets/photos/24.jpg",
+    "game": "games/24.html",
+    "sourcePhoto": "24_장안5리_8리 표지석_온수골.jpg",
+    "sourceGame": "24_장안8리_온수골.html"
+  },
+  {
+    "id": 25,
+    "targetIndex": 24,
+    "photo": "assets/photos/25.jpg",
+    "game": "games/25.html",
+    "sourcePhoto": "25_수촌리_꽃밭 정류장.jpg",
+    "sourceGame": "25_수촌리_꽃밭.html"
+  },
+  {
+    "id": 26,
+    "targetIndex": 25,
+    "photo": "assets/photos/26.jpg",
+    "game": "games/26.html",
+    "sourcePhoto": "26_금의2리 표지석.jpg",
+    "sourceGame": "26_금의리.html"
+  },
+  {
+    "id": 27,
+    "targetIndex": 26,
+    "photo": "assets/photos/27.jpg",
+    "game": "games/27.html",
+    "sourcePhoto": "27_마파지_석포6리.jpg",
+    "sourceGame": "27_석포리 마파지 게임&퀴즈.html"
+  }
+]

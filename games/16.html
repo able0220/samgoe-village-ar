@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>배꽃 피우기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&family=IBM+Plex+Mono:wght@500;600&family=Nanum+Myeongjo:wght@800&display=swap">
+<style>
+:root {
+  --deep: #141a21;
+  --line: #2d3a46;
+  --paper: #f3eef0;
+  --muted: #a7b0b8;
+  --acc: #f0b4c6;
+  --leaf: #8cc66a;
+  --ink: #1a1216;
+  --stamp: #d23a2b;
+  --bad: #e0583f;
+  --f-display: 'Do Hyeon', 'Gowun Dodum', sans-serif;
+  --f-body: 'Gowun Dodum', 'Noto Sans KR', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--deep);
+  color: var(--paper);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 32px;
+}
+.app { max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 16px; }
+.eyebrow { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--acc); }
+h1 { margin: 8px 0 6px; font: 400 clamp(38px, 10vw, 54px)/1.05 var(--f-display); text-wrap: balance; }
+.rule { margin: 0; color: var(--muted); max-width: 44ch; }
+
+.hud { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; padding-block: 12px; border-block: 1px solid var(--line); }
+.k { font: 500 11px/1.2 var(--f-mono); letter-spacing: .1em; color: var(--muted); }
+.stat { display: flex; flex-direction: column; min-width: 0; }
+.stat .v { font: 600 22px/1.2 var(--f-mono); font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.meter { flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.meter .k b { font-weight: 600; font-size: 13px; color: var(--paper); }
+.bar { height: 14px; border-radius: 7px; background: #1d2630; border: 1px solid var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: 7px; background: var(--acc); transition: background .2s; }
+.bar.done i { background: var(--leaf); }
+
+.stage { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #9ccbe2; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+canvas { display: block; width: 100%; aspect-ratio: 4 / 3; max-width: 100%; touch-action: none; cursor: pointer; }
+
+.overlay { position: absolute; inset: 0; display: flex; align-items: safe center; justify-content: center; padding: 16px; overflow-y: auto; background: rgba(14, 18, 24, .8); }
+.overlay[hidden] { display: none; }
+.card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: min(340px, 100%); }
+.card[hidden] { display: none; }
+.tag { margin: 0; font: 600 12px/1 var(--f-mono); letter-spacing: .16em; color: var(--acc); }
+.card h2 { margin: 0; font: 400 clamp(34px, 10vw, 50px)/1.05 var(--f-display); text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); }
+.card .btn { margin-top: 12px; }
+#ovMsg { white-space: pre-line; }
+#quizCard, #stampCard { gap: 6px; }
+.lead-label { margin: 0; font: 600 11px/1 var(--f-mono); letter-spacing: .14em; color: var(--acc); }
+.card p.lead { margin: 0 0 4px; color: var(--paper); font-size: 14px; line-height: 1.5; }
+.card p.quiz-q { margin: 0; color: var(--paper); font: 400 19px/1.3 var(--f-display); }
+.choices { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 6px; }
+.card .choices .btn.choice { display: flex; align-items: center; gap: 12px; margin-top: 0; min-height: 42px; padding: 0 16px; background: #1d2630; color: var(--paper); border: 1px solid var(--line); font: 400 18px/1 var(--f-body); letter-spacing: 0; text-align: left; }
+.btn.choice:hover { border-color: var(--acc); filter: none; }
+.btn.choice b { font: 600 15px/1 var(--f-mono); color: var(--acc); }
+.sheet { width: 100%; display: flex; justify-content: center; padding: 10px; border-radius: 4px; background: #f4ecd6; box-shadow: inset 0 0 0 1px rgba(26, 18, 22, .12), 0 8px 24px rgba(0, 0, 0, .35); }
+.stamp { display: block; width: min(160px, 60%); height: auto; color: var(--stamp); transform: rotate(-8deg); animation: stampIn .7s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes stampIn {
+  0% { transform: scale(2.6) rotate(-22deg); opacity: 0; }
+  55% { transform: scale(.93) rotate(-8deg); opacity: 1; }
+  75% { transform: scale(1.04) rotate(-8deg); }
+  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+
+.btn { appearance: none; border: 0; width: 100%; min-height: 64px; border-radius: 4px; background: var(--acc); color: var(--ink); font: 400 24px/1 var(--f-display); letter-spacing: .03em; cursor: pointer; transition: transform .06s, filter .15s; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.btn:hover { filter: brightness(1.06); }
+.btn.hold, .btn:active { transform: translateY(2px) scale(.99); filter: brightness(.92); }
+.btn:focus-visible { outline: 3px solid var(--paper); outline-offset: 3px; }
+.btn small { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; opacity: .65; margin-left: 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sw { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.sw.b { background: #c98ba0; }
+.sw.f { background: #fff; box-shadow: 0 0 0 2px #d9a9ba; }
+.sw.t { background: var(--leaf); border-radius: 2px; }
+@media (prefers-reduced-motion: reduce) { .btn, .bar i { transition: none; } .stamp { animation: none; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <p class="eyebrow">PEAR BLOSSOM · 난이도 상</p>
+    <h1>배꽃 피우기</h1>
+    <p class="rule">10초 동안 75번 누르세요. 초당 7.5번 속도예요. 누를 때마다 배나무에 꽃이 피고, 75번을 채우면 성공이에요.</p>
+  </header>
+
+  <section class="hud" aria-label="진행 상황">
+    <div class="stat"><span class="k">남은 시간</span><span class="v"><span id="time">10.0</span><small>초</small></span></div>
+    <div class="meter">
+      <span class="k">누른 횟수 <b id="cnt">0</b> / 75</span>
+      <div class="bar" id="bar" role="progressbar" aria-label="누른 횟수" aria-valuemin="0" aria-valuemax="75" aria-valuenow="0"><i id="fill"></i></div>
+    </div>
+    <div class="stat"><span class="k">최고 기록</span><span class="v" id="best">—</span></div>
+  </section>
+
+  <div class="stage">
+    <canvas id="c" aria-label="배꽃이 피어나는 배나무"></canvas>
+    <div class="overlay" id="ov">
+      <div class="card" id="endCard" role="dialog" aria-live="polite">
+        <p class="tag" id="ovTag">READY</p>
+        <h2 id="ovTitle">꽃을 피워 보세요</h2>
+        <p id="ovMsg">'시작하기'를 누르거나 스페이스바·Enter를 누르면 시작해요. 10초 안에 75번 이상 누르면 성공이에요.</p>
+        <button class="btn" id="start" type="button">시작하기</button>
+      </div>
+      <div class="card" id="quizCard" role="dialog" aria-live="polite" hidden>
+        <p class="lead-label">이화리 유래</p>
+        <p class="lead">봄에 하얀 배나무꽃이 많이 피어나는 마을</p>
+        <p class="tag">BONUS QUIZ</p>
+        <p class="quiz-q" id="quizQ"></p>
+        <div class="choices" id="choices"></div>
+      </div>
+      <div class="card" id="stampCard" role="dialog" aria-live="polite" hidden>
+        <div class="sheet">
+          <svg class="stamp" viewBox="0 0 220 220" role="img" aria-label="합격 도장">
+            <defs>
+              <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="warp"/>
+                <feDisplacementMap in="SourceGraphic" in2="warp" scale="3.5" result="bent"/>
+                <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="9" result="grain"/>
+                <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -5 3.9" result="ink"/>
+                <feComposite in="bent" in2="ink" operator="in"/>
+              </filter>
+            </defs>
+            <g filter="url(#rough)" fill="currentColor" stroke="currentColor" style="font-family: 'Nanum Myeongjo', 'Noto Serif KR', serif; font-weight: 800;">
+              <circle cx="110" cy="110" r="100" fill="none" stroke-width="8"/>
+              <circle cx="110" cy="110" r="88" fill="none" stroke-width="2.5"/>
+              <text x="110" y="70" text-anchor="middle" font-size="15" letter-spacing="4" stroke="none">퀴즈 통과</text>
+              <text x="110" y="136" text-anchor="middle" font-size="76" stroke="none">합격</text>
+              <text x="110" y="170" text-anchor="middle" font-size="14" letter-spacing="3" stroke="none">이화리 배꽃</text>
+            </g>
+          </svg>
+        </div>
+        <button class="btn" id="again2" type="button">다시 하기</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="tap" type="button">톡톡 눌러 꽃 피우기<small>SPACE</small></button>
+
+  <ul class="legend" aria-label="화면 보는 법">
+    <li><span class="sw b"></span>봉오리: 아직 안 핀 꽃</li>
+    <li><span class="sw f"></span>활짝 핀 꽃: 누른 만큼</li>
+    <li><span class="sw t"></span>10초 안에 75번이 목표</li>
+  </ul>
+</main>
+
+<script>
+(() => {
+  const DURATION = 10;   // 제한 시간(초)
+  const GOAL = 75;       // 클리어에 필요한 누른 횟수 (초당 7.5번)
+  const SLOTS = 80;      // 나무에 달리는 봉오리 수
+  const DISPLAY = '"Do Hyeon", "Gowun Dodum", sans-serif';
+
+  // 성공했을 때 나오는 객관식 퀴즈. answer는 정답 보기의 번호(1부터)다.
+  const QUIZ = {
+    q: "이화리의 '이화'는 어떤 꽃일까요?",
+    options: ['장미', '배꽃', '물망초'],
+    answer: 2,
+    note: "'이화(梨花)'는 배꽃이라는 뜻이에요."
+  };
+
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  const timeEl = document.getElementById('time');
+  const cntEl = document.getElementById('cnt');
+  const barEl = document.getElementById('bar');
+  const fillEl = document.getElementById('fill');
+  const bestEl = document.getElementById('best');
+  const ov = document.getElementById('ov');
+  const ovTag = document.getElementById('ovTag');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovMsg = document.getElementById('ovMsg');
+  const startBtn = document.getElementById('start');
+  const tapBtn = document.getElementById('tap');
+  const endCard = document.getElementById('endCard');
+  const quizCard = document.getElementById('quizCard');
+  const stampCard = document.getElementById('stampCard');
+  const choicesEl = document.getElementById('choices');
+  const again2 = document.getElementById('again2');
+
+  document.getElementById('quizQ').textContent = QUIZ.q;
+  QUIZ.options.forEach((txt, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn choice';
+    b.setAttribute('aria-label', (i + 1) + '번 ' + txt);
+    b.innerHTML = '<b>' + (i + 1) + '</b><span></span>';
+    b.lastChild.textContent = txt;
+    b.addEventListener('click', () => answer(i + 1));
+    choicesEl.appendChild(b);
+  });
+
+  let W = 400, H = 300, dpr = 1, bg = null;
+  let state = 'ready', won = false, t0 = 0, taps = 0, best = 0, endTimer;
+  let slots = [], bloomT = [], petals = [], lastT = 0, readyAt = 0;
+
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  const srnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+  try { best = parseInt(localStorage.getItem('pear-best-75'), 10) || 0; } catch (e) { best = 0; }
+  showBest();
+  function showBest() { bestEl.textContent = best > 0 ? best + '번' : '—'; }
+
+  /* ---------- 나무 모양 (비율 좌표) ---------- */
+  const BR = [
+    [[0.50, 0.60], [0.36, 0.52], [0.18, 0.36]],
+    [[0.50, 0.60], [0.64, 0.52], [0.82, 0.35]],
+    [[0.50, 0.52], [0.42, 0.37], [0.33, 0.15]],
+    [[0.50, 0.52], [0.58, 0.37], [0.68, 0.14]],
+    [[0.50, 0.50], [0.50, 0.34], [0.50, 0.10]],
+    [[0.50, 0.68], [0.40, 0.63], [0.25, 0.57]],
+    [[0.50, 0.68], [0.60, 0.63], [0.75, 0.56]],
+    [[0.36, 0.52], [0.30, 0.44], [0.22, 0.30]]
+  ];
+  function bez(b, t) {
+    const u = 1 - t;
+    return [u * u * b[0][0] + 2 * u * t * b[1][0] + t * t * b[2][0], u * u * b[0][1] + 2 * u * t * b[1][1] + t * t * b[2][1]];
+  }
+  function makeSlots() {
+    slots = [];
+    for (let i = 0; i < SLOTS; i++) {
+      const b = BR[i % 7];
+      const t = 0.38 + 0.62 * srnd(i * 3 + 1);
+      const p = bez(b, t);
+      slots.push({ x: p[0] + (srnd(i * 5 + 2) - 0.5) * 0.07, y: p[1] + (srnd(i * 7 + 3) - 0.5) * 0.07, rot: srnd(i + 11) * 6.28, k: 0.85 + srnd(i * 13 + 4) * 0.35 });
+    }
+    // 어느 순서로 피어도 고르게 퍼져 보이도록 섞는다.
+    for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(srnd(i * 17 + 5) * (i + 1)); const s = slots[i]; slots[i] = slots[j]; slots[j] = s; }
+  }
+
+  /* ---------- 배경: 봄 과수원 ---------- */
+  function buildBg() {
+    bg = document.createElement('canvas');
+    bg.width = cv.width; bg.height = cv.height;
+    const b = bg.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const gl = H * 0.8;
+
+    let gr = b.createLinearGradient(0, 0, 0, gl);
+    gr.addColorStop(0, '#8fc3e2'); gr.addColorStop(0.7, '#d4e9ee'); gr.addColorStop(1, '#eef2dc');
+    b.fillStyle = gr; b.fillRect(0, 0, W, gl);
+
+    b.fillStyle = 'rgba(255,255,255,.85)';
+    [[0.16, 0.11, 0.10, 0.026], [0.25, 0.125, 0.07, 0.02], [0.80, 0.09, 0.11, 0.024], [0.9, 0.115, 0.07, 0.018]].forEach(c => {
+      b.beginPath(); b.ellipse(c[0] * W, c[1] * H, c[2] * W, c[3] * H, 0, 0, Math.PI * 2); b.fill();
+    });
+
+    b.fillStyle = '#b4cfb0';
+    b.beginPath(); b.moveTo(0, gl);
+    for (let x = 0; x <= W; x += 6) b.lineTo(x, H * 0.62 - H * 0.07 * (0.6 * Math.sin(x / W * 3.4 + 0.5) + 0.4 * Math.sin(x / W * 9 + 1.2)));
+    b.lineTo(W, gl); b.closePath(); b.fill();
+    b.fillStyle = '#93bb8c';
+    b.beginPath(); b.moveTo(0, gl);
+    for (let x = 0; x <= W; x += 6) b.lineTo(x, H * 0.7 - H * 0.04 * (0.6 * Math.sin(x / W * 5 + 2.1) + 0.4 * Math.sin(x / W * 13 + 0.4)));
+    b.lineTo(W, gl); b.closePath(); b.fill();
+
+    gr = b.createLinearGradient(0, gl, 0, H);
+    gr.addColorStop(0, '#9ccb6c'); gr.addColorStop(1, '#5f9a45');
+    b.fillStyle = gr; b.fillRect(0, gl - 1, W, H - gl + 2);
+    b.strokeStyle = '#4f8a3a'; b.lineWidth = 1.4; b.lineCap = 'round';
+    for (let i = 0; i < 90; i++) {
+      const x = W * srnd(i * 3 + 1), y = gl + (H - gl) * srnd(i * 5 + 2), h = H * (0.014 + 0.016 * srnd(i * 7 + 3));
+      b.beginPath(); b.moveTo(x, y); b.lineTo(x - h * 0.4, y - h); b.moveTo(x, y); b.lineTo(x + h * 0.4, y - h * 0.9); b.stroke();
+    }
+
+    // 나무 그림자
+    b.fillStyle = 'rgba(40,70,30,.22)';
+    b.beginPath(); b.ellipse(W * 0.5, H * 0.875, W * 0.2, H * 0.03, 0, 0, Math.PI * 2); b.fill();
+
+    // 줄기
+    b.lineCap = 'round'; b.lineJoin = 'round';
+    b.strokeStyle = '#5d4331'; b.lineWidth = W * 0.05;
+    b.beginPath(); b.moveTo(W * 0.5, H * 0.88); b.quadraticCurveTo(W * 0.485, H * 0.74, W * 0.5, H * 0.6); b.stroke();
+    b.lineWidth = W * 0.032;
+    b.beginPath(); b.moveTo(W * 0.5, H * 0.62); b.lineTo(W * 0.5, H * 0.48); b.stroke();
+    // 가지
+    BR.forEach((br, i) => {
+      b.strokeStyle = i < 2 ? '#5d4331' : '#6b4f3a';
+      b.lineWidth = W * (i < 2 ? 0.024 : 0.016);
+      b.beginPath(); b.moveTo(br[0][0] * W, br[0][1] * H);
+      b.quadraticCurveTo(br[1][0] * W, br[1][1] * H, br[2][0] * W, br[2][1] * H); b.stroke();
+      for (let k = 0; k < 6; k++) {
+        const p = bez(br, 0.35 + 0.1 * k), ang = (srnd(i * 9 + k) - 0.5) * 2.6 - 1.57, len = W * (0.03 + 0.03 * srnd(i * 5 + k + 40));
+        b.lineWidth = W * 0.007;
+        b.beginPath(); b.moveTo(p[0] * W, p[1] * H); b.lineTo(p[0] * W + Math.cos(ang) * len, p[1] * H + Math.sin(ang) * len); b.stroke();
+      }
+    });
+    // 초록 잎 몇 장
+    for (let i = 0; i < 26; i++) {
+      const p = bez(BR[i % 7], 0.3 + 0.7 * srnd(i + 77));
+      b.fillStyle = i % 2 ? '#7fae58' : '#6a9c4c';
+      b.beginPath(); b.ellipse(p[0] * W + (srnd(i + 3) - 0.5) * W * 0.08, p[1] * H + (srnd(i + 9) - 0.5) * H * 0.08, W * 0.012, H * 0.01, srnd(i) * 3, 0, Math.PI * 2); b.fill();
+    }
+  }
+
+  function fit() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth || 400;
+    H = Math.round(W * 3 / 4);
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    buildBg();
+  }
+
+  /* ---------- 꽃 그리기 ---------- */
+  function bud(x, y, r) {
+    ctx.fillStyle = '#c98ba0';
+    ctx.beginPath(); ctx.arc(x, y, r * 0.34, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f1d3de';
+    ctx.beginPath(); ctx.arc(x - r * 0.08, y - r * 0.1, r * 0.14, 0, Math.PI * 2); ctx.fill();
+  }
+  function flower(x, y, r, rot) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.fillStyle = '#fffefb'; ctx.strokeStyle = 'rgba(201,139,160,.75)'; ctx.lineWidth = Math.max(1, r * 0.07);
+    for (let k = 0; k < 5; k++) {
+      ctx.save(); ctx.rotate(k * 1.2566);
+      ctx.beginPath(); ctx.ellipse(0, -r * 0.56, r * 0.4, r * 0.58, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#e59db4';
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#b4506f'; ctx.lineWidth = 1;
+    for (let k = 0; k < 6; k++) {
+      const a = k * 1.047;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * 0.2, Math.sin(a) * r * 0.2); ctx.lineTo(Math.cos(a) * r * 0.36, Math.sin(a) * r * 0.36); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  const backOut = q => { const c = 1.9; return 1 + (c + 1) * Math.pow(q - 1, 3) + c * Math.pow(q - 1, 2); };
+
+  function spawnPetals(x, y, n, now) {
+    for (let i = 0; i < n; i++) {
+      if (petals.length > 140) petals.shift();
+      petals.push({ x: x + (Math.random() - 0.5) * W * 0.03, y: y, vx: (Math.random() - 0.5) * W * 0.12, vy: -Math.random() * H * 0.05,
+        r: W * (0.007 + Math.random() * 0.005), rot: Math.random() * 6, vr: (Math.random() - 0.5) * 6, ph: Math.random() * 6, t0: now, life: 1300 + Math.random() * 700 });
+    }
+  }
+
+  /* ---------- 진행 ---------- */
+  function startGame() {
+    clearTimeout(endTimer);
+    quizCard.hidden = true; stampCard.hidden = true; endCard.hidden = false;
+    state = 'play'; won = false; taps = 0; petals = []; bloomT = [];
+    t0 = performance.now();
+    ov.hidden = true;
+    tapBtn.classList.remove('hold');
+    updateHud(DURATION);
+  }
+
+  function updateHud(left) {
+    timeEl.textContent = Math.max(0, left).toFixed(1);
+    cntEl.textContent = taps;
+    fillEl.style.width = (Math.min(1, taps / GOAL) * 100).toFixed(1) + '%';
+    barEl.classList.toggle('done', taps >= GOAL);
+    barEl.setAttribute('aria-valuenow', String(Math.min(taps, GOAL)));
+  }
+
+  function tap(now) {
+    if (state !== 'play') return;
+    if (now - t0 >= DURATION * 1000) return;   // 10초가 지난 뒤의 입력은 세지 않는다
+    const i = taps;
+    taps++;
+    if (i < SLOTS) { bloomT[i] = now; spawnPetals(slots[i].x * W, slots[i].y * H, 2, now); }
+    else spawnPetals((0.2 + Math.random() * 0.6) * W, (0.15 + Math.random() * 0.4) * H, 2, now);
+    updateHud(DURATION - (now - t0) / 1000);
+  }
+
+  function finish() {
+    state = 'over';
+    won = taps >= GOAL;
+    tapBtn.classList.remove('hold');
+    if (taps > best) {
+      best = taps;
+      try { localStorage.setItem('pear-best-75', String(best)); } catch (e) { /* 저장 없이도 동작 */ }
+      showBest();
+    }
+    updateHud(0);
+    endTimer = setTimeout(() => {
+      if (won) { showQuiz(); return; }
+      ovTag.textContent = 'TRY AGAIN';
+      ovTitle.textContent = '꽃이 덜 피었어요';
+      ovMsg.textContent = DURATION + '초 동안 ' + taps + '번 눌렀어요. ' + GOAL + '번이 필요해요.\n(초당 ' + (taps / DURATION).toFixed(1) + '번 / 목표 7.5번)';
+      startBtn.textContent = '다시 하기';
+      ov.hidden = false;
+      readyAt = performance.now() + 900;
+      startBtn.focus({ preventScroll: true });
+    }, 700);
+  }
+
+  /* ---------- 성공 후 객관식 퀴즈 ---------- */
+  function showQuiz() {
+    endCard.hidden = true; stampCard.hidden = true; quizCard.hidden = false;
+    ov.hidden = false;
+    choicesEl.firstChild.focus({ preventScroll: true });
+  }
+  function answer(n) {
+    if (quizCard.hidden) return;
+    quizCard.hidden = true;
+    if (n === QUIZ.answer) {          // 정답이면 결과창 대신 합격 도장이 찍힌다
+      stampCard.hidden = false;
+      again2.focus({ preventScroll: true });
+      return;
+    }
+    endCard.hidden = false;
+    ovTag.textContent = 'CLEAR · 오답';
+    ovTitle.textContent = '정답은 ' + QUIZ.answer + '번이에요';
+    ovMsg.textContent = QUIZ.note + '\n' + DURATION + '초 동안 ' + taps + '번을 눌렀어요.';
+    startBtn.textContent = '다시 하기';
+    readyAt = performance.now() + 900;
+    startBtn.focus({ preventScroll: true });
+  }
+
+  /* ---------- 그리기 ---------- */
+  function render(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (bg) ctx.drawImage(bg, 0, 0, W, H);
+    const R = W * 0.032;
+
+    for (let i = 0; i < SLOTS; i++) {
+      const s = slots[i], x = s.x * W, y = s.y * H;
+      if (i >= taps || bloomT[i] === undefined) { bud(x, y, R * s.k); continue; }
+      const q = clamp((now - bloomT[i]) / 320, 0, 1);
+      bud(x, y, R * s.k * (1 - q));
+      flower(x, y, R * s.k * backOut(q), s.rot);
+    }
+
+    const dt = clamp((now - lastT) / 1000, 0, 0.05);
+    petals = petals.filter(p => now - p.t0 < p.life);
+    petals.forEach(p => {
+      p.vy += H * 0.35 * dt; p.vx *= 0.99;
+      p.x += (p.vx + Math.sin(now / 300 + p.ph) * W * 0.02) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      ctx.save();
+      ctx.globalAlpha = clamp(1.6 * (1 - (now - p.t0) / p.life), 0, 1);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = '#fff8fa'; ctx.strokeStyle = 'rgba(201,139,160,.6)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(0, 0, p.r, p.r * 0.62, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+
+    // 누른 횟수를 장면 위에 크게 보여 준다.
+    if (state !== 'ready') {
+      ctx.save();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.font = '400 ' + (H * 0.13) + 'px ' + DISPLAY;
+      ctx.lineJoin = 'round'; ctx.lineWidth = H * 0.026; ctx.strokeStyle = 'rgba(30,20,28,.85)';
+      ctx.strokeText(String(taps), W * 0.04, H * 0.04);
+      ctx.fillStyle = taps >= GOAL ? '#b6f08a' : '#fff4f7';
+      ctx.fillText(String(taps), W * 0.04, H * 0.04);
+      ctx.restore();
+    }
+  }
+
+  function frame(now) {
+    if (state === 'play') {
+      const left = DURATION - (now - t0) / 1000;
+      if (left <= 0) finish(); else timeEl.textContent = left.toFixed(1);
+    }
+    render(now);
+    lastT = now;
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 입력: 누를 때마다 한 번씩 센다 ---------- */
+  function press() { tapBtn.classList.add('hold'); tap(performance.now()); }
+  function lift() { tapBtn.classList.remove('hold'); }
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
+  tapBtn.addEventListener('pointerdown', e => { e.preventDefault(); press(); });
+  window.addEventListener('pointerup', lift);
+  window.addEventListener('pointercancel', lift);
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  tapBtn.addEventListener('contextmenu', e => e.preventDefault());
+  startBtn.addEventListener('click', startGame);
+  again2.addEventListener('click', startGame);
+  document.addEventListener('keydown', e => {
+    // 시작·다시 하기 화면에서는 스페이스바나 Enter로도 시작한다. (연타하던 키가 바로 다시 시작시키지 않도록 잠깐 기다린다)
+    if (!ov.hidden && !endCard.hidden) {
+      if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat) {
+        e.preventDefault();
+        if (performance.now() >= readyAt) startGame();
+      }
+      return;
+    }
+    if (!quizCard.hidden && !ov.hidden) {
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= QUIZ.options.length) answer(n);
+      return;
+    }
+    if (e.code !== 'Space' || !ov.hidden) return;
+    e.preventDefault();
+    if (!e.repeat) press();        // 꾹 눌러 둔 채로는 늘어나지 않는다
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code !== 'Space' || !ov.hidden) return;
+    e.preventDefault();
+    lift();
+  });
+  window.addEventListener('resize', fit);
+
+  makeSlots();
+  fit();
+  startBtn.focus({ preventScroll: true });
+  lastT = performance.now();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

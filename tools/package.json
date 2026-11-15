@@ -1,0 +1,1 @@
+{"private":true,"type":"module","scripts":{"build:targets":"node build-targets.mjs"},"dependencies":{"mind-ar":"1.2.5","canvas":"npm:@napi-rs/canvas@0.1.80"},"overrides":{"canvas":"$canvas"}}
