@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p _site
-          cp index.html app.js core.js game.html game.js styles.css stone-test.html stone-regions.json stone-test.mind .nojekyll _site/
+          cp index.html app.js core.js game.html game.js styles.css aframe-test.html stone-test.html stone-regions.json stone-test.mind .nojekyll _site/
           cp -R assets games vendor _site/
           test -s _site/assets/targets/villages.mind
           test "$(find _site/games -name '*.html' | wc -l)" -eq 27
