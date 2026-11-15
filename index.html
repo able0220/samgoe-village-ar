@@ -38,7 +38,8 @@
 <a-entity mindar-image-target="targetIndex:28" id="target28"></a-entity>
 <a-entity mindar-image-target="targetIndex:29" id="target29"></a-entity>
 </a-scene><script>
-function fitCamera(){if(system?.video){system._resize();}} window.addEventListener('orientationchange',()=>setTimeout(fitCamera,300)); window.visualViewport?.addEventListener('resize',fitCamera);\nconst ids=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,6,9,11],$=id=>document.getElementById(id),scene=$('scene');let system,found=false,cooldown=0;
+function fitCamera(){if(system?.video){system._resize();}} window.addEventListener('orientationchange',()=>setTimeout(fitCamera,300)); window.visualViewport?.addEventListener('resize',fitCamera);
+const ids=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,6,9,11],$=id=>document.getElementById(id),scene=$('scene');let system,found=false,cooldown=0;
 function ready(){return new Promise((resolve,reject)=>{const read=()=>{const s=scene.systems?.['mindar-image-system'];s?resolve(s):reject(Error('인식 엔진 초기화 실패'));};if(scene.hasLoaded)return read();const t=setTimeout(()=>reject(Error('장면 준비 시간 초과. 인터넷 연결을 확인하세요.')),20000);scene.addEventListener('loaded',()=>{clearTimeout(t);read();},{once:true});});}
 $('begin').onclick=async()=>{try{$('begin').disabled=true;$('message').textContent='인식 자료 확인 중…';if(!isSecureContext)throw Error('HTTPS 주소로 접속하세요.');const r=await fetch('./assets/targets/villages.mind');if(!r.ok)throw Error('인식 데이터 로드 실패');system=await ready();$('message').textContent='카메라와 인식 엔진 준비 중…';await system.start();$('start').classList.add('hidden');}catch(e){$('message').textContent=e.message||'카메라 시작 실패';$('begin').disabled=false;}};
 scene.addEventListener('arReady',()=>{$('start').classList.add('hidden');$('status').textContent='인식 실행 중 · 마을 표지석을 비춰 주세요';});
@@ -48,6 +49,7 @@ $('again').onclick=()=>{found=false;cooldown=Date.now()+2000;$('found').classLis
 window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 window.addEventListener('pagehide',()=>{try{system?.stop();}catch{}});
 </script></body></html>
+
 
 
 
